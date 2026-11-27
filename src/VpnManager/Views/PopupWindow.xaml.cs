@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32;
 using VpnManager.Tray;
 using VpnManager.ViewModels;
 
@@ -57,19 +56,8 @@ public partial class PopupWindow : Window {
 	}
 
 	private void ApplyTheme() {
-		var systemLight = Registry.GetValue(
-			@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
-			"AppsUseLightTheme", 1) is not int v || v != 0;
-		var light = (DataContext as MainViewModel)?.Theme switch {
-			"light" => true,
-			"dark" => false,
-			_ => systemLight
-		};
-
 		if (_theme != null) Resources.MergedDictionaries.Remove(_theme);
-		_theme = new ResourceDictionary {
-			Source = new Uri($"/VpnManager;component/Views/Themes/{(light ? "Light" : "Dark")}.xaml", UriKind.Relative)
-		};
+		_theme = ThemeResources.Load((DataContext as MainViewModel)?.Theme);
 		Resources.MergedDictionaries.Add(_theme);
 	}
 

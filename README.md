@@ -17,7 +17,7 @@ A lightweight Windows tray utility for managing the built-in VPN connections. Cl
 - Tray icon reflects whether any VPN is active; its tooltip lists the connected profiles.
 - Balloon notifications when a connection drops, fails, or auto-reconnect gives up (only while the popup is closed; can be turned off).
 - Light and dark theme: follows the system by default, or pick Light / Dark in the tray menu.
-- Connection log with connect, disconnect, drop (with session length) and failure entries; open it from the tray menu.
+- Connection log with connect, disconnect, drop (with session length) and failure entries; view it in a built-in window from the tray menu (newest first, refresh and copy buttons).
 - English and Russian UI. Follows the system language by default; can be switched from the tray menu.
 - Global `Ctrl+Alt+V` hotkey toggles the popup (can be turned off in the tray menu; it is skipped if another app already uses it).
 - Tray icon's context menu: autostart with Windows, language, hotkey, hidden profiles, notifications, theme, connection log and **Exit**.

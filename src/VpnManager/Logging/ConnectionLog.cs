@@ -45,6 +45,21 @@ public sealed class FileConnectionLog : IConnectionLog {
 		Trim();
 	}
 
+	/// <summary>Последние записи журнала, новые сверху. Нет файла или ошибка чтения — пустой список.</summary>
+	public static IReadOnlyList<string> ReadRecent(string? path = null, int max = KeepLines) {
+		try {
+			using var stream = new FileStream(path ?? DefaultPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			using var reader = new StreamReader(stream, Encoding.UTF8);
+			var lines = new List<string>();
+			while (reader.ReadLine() is { } line)
+				if (line.Length > 0) lines.Add(line);
+			lines.Reverse();
+			return lines.Count > max ? lines.GetRange(0, max) : lines;
+		} catch {
+			return Array.Empty<string>();
+		}
+	}
+
 	public void Write(ConnectionEvent e) {
 		try {
 			lock (_lock) {

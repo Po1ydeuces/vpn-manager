@@ -506,6 +506,26 @@ public class PreferencesTests {
 	}
 
 	[Fact]
+	public void ReadRecent_ReturnsNewestFirst_AndRespectsMax() {
+		var path = Path.Combine(Path.GetTempPath(), $"vpnmgr-{Guid.NewGuid():N}.log");
+		try {
+			File.WriteAllLines(path, new[] { "one", "", "two", "three" });
+
+			Assert.Equal(new[] { "three", "two", "one" }, FileConnectionLog.ReadRecent(path));
+			Assert.Equal(new[] { "three", "two" }, FileConnectionLog.ReadRecent(path, 2));
+		} finally {
+			File.Delete(path);
+		}
+	}
+
+	[Fact]
+	public void ReadRecent_MissingFile_ReturnsEmpty() {
+		var path = Path.Combine(Path.GetTempPath(), $"vpnmgr-{Guid.NewGuid():N}.log");
+
+		Assert.Empty(FileConnectionLog.ReadRecent(path));
+	}
+
+	[Fact]
 	public void SpeedText_ShowsZeroOnFirstPoll_AndClearsWhenDisconnected() {
 		var clock = new FakeClock();
 		var ras = new FakeRasService {
