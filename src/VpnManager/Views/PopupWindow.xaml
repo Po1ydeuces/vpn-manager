@@ -141,6 +141,9 @@
                                 </Grid>
                             </Button>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="StartBtn" Style="{StaticResource IconButton}" Content="&#xE7E8;"
+                                        Command="{Binding ToggleConnectOnStartCommand}"
+                                        ToolTip="{Binding ConnectOnStartTip}" Tag="{Binding ConnectOnStart}" />
                                 <Button x:Name="ReconnectBtn" Style="{StaticResource IconButton}" Content="&#xE72C;"
                                         Command="{Binding ToggleAutoReconnectCommand}"
                                         ToolTip="{Binding AutoReconnectTip}" Tag="{Binding AutoReconnect}" />
@@ -152,6 +155,7 @@
                             <DataTemplate.Triggers>
                                 <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
                                     <Setter TargetName="ReconnectBtn" Property="Opacity" Value="1" />
+                                    <Setter TargetName="StartBtn" Property="Opacity" Value="1" />
                                     <Setter TargetName="PinBtn" Property="Opacity" Value="1" />
                                 </Trigger>
                             </DataTemplate.Triggers>

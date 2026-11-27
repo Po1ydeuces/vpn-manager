@@ -114,6 +114,7 @@ public sealed class TrayHost : IDisposable {
 		_popup.ShowAt(Forms.Cursor.Position);
 	}
 
+	private bool _startupDone;
 	private bool _refreshing;
 
 	private async void Tick() {
@@ -121,6 +122,10 @@ public sealed class TrayHost : IDisposable {
 		_refreshing = true;
 		try {
 			await _vm.RefreshAsync();
+			if (!_startupDone) {
+				_startupDone = true;
+				_ = _vm.ConnectOnStartAsync(); // профили с флагом подключаются после первого опроса
+			}
 			_icon.Icon = _vm.AnyConnected ? _iconOn : _iconOff;
 		} catch (Exception) {
 			// следующий тик попробует снова

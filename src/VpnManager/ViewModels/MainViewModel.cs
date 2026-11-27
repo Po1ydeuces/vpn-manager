@@ -72,7 +72,8 @@ public class MainViewModel : ViewModelBase {
 			if (item == null) {
 				item = new VpnItemViewModel(entry.Name, _ras, _time, _reconnectDelay) {
 					IsPinned = _settings.Pinned.Contains(entry.Name),
-					AutoReconnect = _settings.AutoReconnect.Contains(entry.Name)
+					AutoReconnect = _settings.AutoReconnect.Contains(entry.Name),
+					ConnectOnStart = _settings.ConnectOnStart.Contains(entry.Name)
 				};
 				item.PreferencesChanged += OnPreferencesChanged;
 				Items.Add(item);
@@ -86,9 +87,16 @@ public class MainViewModel : ViewModelBase {
 		AnyConnected = Items.Any(x => x.State == VpnState.Connected);
 	}
 
+	/// <summary>При запуске приложения подключить отключённые профили с флагом «подключать при запуске».</summary>
+	public Task ConnectOnStartAsync() {
+		var targets = Items.Where(x => x.ConnectOnStart && x.State == VpnState.Disconnected).ToList();
+		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
+	}
+
 	private void OnPreferencesChanged() {
 		_settings.Pinned = Items.Where(x => x.IsPinned).Select(x => x.Name).ToList();
 		_settings.AutoReconnect = Items.Where(x => x.AutoReconnect).Select(x => x.Name).ToList();
+		_settings.ConnectOnStart = Items.Where(x => x.ConnectOnStart).Select(x => x.Name).ToList();
 		_store.Save(_settings);
 		Resort();
 	}

@@ -149,4 +149,28 @@ public class PreferencesTests {
 
 		Assert.Empty(ras.ConnectCalls);
 	}
+
+	[Fact]
+	public async Task ConnectOnStart_ConnectsOnlyFlaggedDisconnectedProfiles() {
+		var ras = new FakeRasService { Entries = { Off("A"), Off("B"), On("C", TimeSpan.Zero) } };
+		var vm = Create(ras);
+		vm.Items[0].ConnectOnStart = true; // A
+		vm.Items[2].ConnectOnStart = true; // C уже подключён
+
+		await vm.ConnectOnStartAsync();
+
+		Assert.Equal(new[] { "A" }, ras.ConnectCalls);
+	}
+
+	[Fact]
+	public void ConnectOnStart_IsPersisted() {
+		var store = new MemorySettingsStore();
+		var ras = new FakeRasService { Entries = { Off("A"), Off("B") } };
+		Create(ras, store).Items[1].ConnectOnStart = true;
+
+		var second = Create(ras, store);
+
+		Assert.False(second.Items[0].ConnectOnStart);
+		Assert.True(second.Items[1].ConnectOnStart);
+	}
 }

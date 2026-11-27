@@ -19,7 +19,9 @@ public static class Loc {
 		["Pin"] = ("Pin to top", "Закрепить"),
 		["Unpin"] = ("Unpin", "Открепить"),
 		["AutoReconnectOn"] = ("Auto-reconnect: on", "Автопереподключение: вкл"),
-		["AutoReconnectOff"] = ("Auto-reconnect: off", "Автопереподключение: выкл")
+		["AutoReconnectOff"] = ("Auto-reconnect: off", "Автопереподключение: выкл"),
+		["ConnectOnStartOn"] = ("Connect on app start: on", "Подключать при запуске: вкл"),
+		["ConnectOnStartOff"] = ("Connect on app start: off", "Подключать при запуске: выкл")
 	};
 
 	private static bool _ru;

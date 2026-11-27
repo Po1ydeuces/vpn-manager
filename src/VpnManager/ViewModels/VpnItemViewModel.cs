@@ -15,6 +15,7 @@ public class VpnItemViewModel : ViewModelBase {
 	private string? _errorText;
 	private bool _isPinned;
 	private bool _autoReconnect;
+	private bool _connectOnStart;
 
 	/// <summary>Сколько ошибка остаётся видимой.</summary>
 	public static readonly TimeSpan ErrorLifetime = TimeSpan.FromSeconds(30);
@@ -36,6 +37,10 @@ public class VpnItemViewModel : ViewModelBase {
 			IsPinned = !IsPinned;
 			return Task.CompletedTask;
 		});
+		ToggleConnectOnStartCommand = new RelayCommand(() => {
+			ConnectOnStart = !ConnectOnStart;
+			return Task.CompletedTask;
+		});
 		ToggleAutoReconnectCommand = new RelayCommand(() => {
 			AutoReconnect = !AutoReconnect;
 			return Task.CompletedTask;
@@ -46,6 +51,7 @@ public class VpnItemViewModel : ViewModelBase {
 	public ICommand ToggleCommand { get; }
 	public ICommand TogglePinCommand { get; }
 	public ICommand ToggleAutoReconnectCommand { get; }
+	public ICommand ToggleConnectOnStartCommand { get; }
 
 	/// <summary>Пользователь изменил закрепление или автопереподключение (нужно сохранить и пересортировать).</summary>
 	public event Action? PreferencesChanged;
@@ -70,6 +76,18 @@ public class VpnItemViewModel : ViewModelBase {
 	}
 
 	public string PinTip => Loc.T(IsPinned ? "Unpin" : "Pin");
+
+	/// <summary>Подключать профиль при запуске приложения.</summary>
+	public bool ConnectOnStart {
+		get => _connectOnStart;
+		set {
+			if (!Set(ref _connectOnStart, value)) return;
+			Raise(nameof(ConnectOnStartTip));
+			PreferencesChanged?.Invoke();
+		}
+	}
+
+	public string ConnectOnStartTip => Loc.T(ConnectOnStart ? "ConnectOnStartOn" : "ConnectOnStartOff");
 	public string AutoReconnectTip => Loc.T(AutoReconnect ? "AutoReconnectOn" : "AutoReconnectOff");
 
 	public VpnState State {
@@ -93,6 +111,7 @@ public class VpnItemViewModel : ViewModelBase {
 		Raise(nameof(StatusText));
 		Raise(nameof(PinTip));
 		Raise(nameof(AutoReconnectTip));
+		Raise(nameof(ConnectOnStartTip));
 	}
 
 	public string? DurationText {

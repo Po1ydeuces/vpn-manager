@@ -6,6 +6,7 @@ namespace VpnManager.Settings;
 public class AppSettings {
 	public List<string> Pinned { get; set; } = new();
 	public List<string> AutoReconnect { get; set; } = new();
+	public List<string> ConnectOnStart { get; set; } = new();
 
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language { get; set; }
