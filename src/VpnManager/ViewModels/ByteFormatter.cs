@@ -18,4 +18,9 @@ public static class ByteFormatter {
 			? $"{bytes} B"
 			: v.ToString(v >= 100 ? "0" : "0.#", CultureInfo.InvariantCulture) + " " + Units[i];
 	}
+
+	/// <summary>Скорость в байтах/с: "120 KB/s".</summary>
+	public static string FormatRate(double bytesPerSecond) {
+		return Format((long)bytesPerSecond) + "/s";
+	}
 }

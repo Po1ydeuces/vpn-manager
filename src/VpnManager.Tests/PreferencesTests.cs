@@ -338,4 +338,67 @@ public class PreferencesTests {
 
 		Assert.Equal("dark", Create(new FakeRasService(), store).Theme);
 	}
+
+	private sealed class FakeClock : TimeProvider {
+		public DateTimeOffset Now { get; set; } = new(2026, 11, 27, 10, 0, 0, TimeSpan.Zero);
+
+		public override DateTimeOffset GetUtcNow() {
+			return Now;
+		}
+	}
+
+	[Fact]
+	public void Speed_IsComputedFromCounterDeltaBetweenPolls() {
+		var clock = new FakeClock();
+		var ras = new FakeRasService {
+			Entries = { new VpnEntry("A", VpnState.Connected, TimeSpan.Zero, null, 0, 0) }
+		};
+		var vm = new MainViewModel(ras, clock);
+		vm.Refresh();
+		Assert.Equal("↓ 0 B  ↑ 0 B", vm.Items[0].TrafficText); // первый опрос: скорости ещё нет
+
+		clock.Now += TimeSpan.FromSeconds(2);
+		ras.Entries = new List<VpnEntry> {
+			new("A", VpnState.Connected, TimeSpan.FromSeconds(2), null, 2048, 10 * 1024 * 1024)
+		};
+		vm.Refresh();
+
+		Assert.Equal("↓ 10 MB (5 MB/s)  ↑ 2 KB (1 KB/s)", vm.Items[0].TrafficText);
+	}
+
+	[Fact]
+	public void Speed_CounterWrap_DoesNotGoNegative() {
+		var clock = new FakeClock();
+		var ras = new FakeRasService {
+			Entries = { new VpnEntry("A", VpnState.Connected, TimeSpan.Zero, null, 0, uint.MaxValue - 1023) }
+		};
+		var vm = new MainViewModel(ras, clock);
+		vm.Refresh();
+
+		clock.Now += TimeSpan.FromSeconds(1);
+		ras.Entries = new List<VpnEntry> { new("A", VpnState.Connected, TimeSpan.Zero, null, 0, 1024) };
+		vm.Refresh();
+
+		Assert.Contains("(2 KB/s)", vm.Items[0].TrafficText);
+	}
+
+	[Fact]
+	public void Speed_ResetsAfterDisconnect() {
+		var clock = new FakeClock();
+		var ras = new FakeRasService {
+			Entries = { new VpnEntry("A", VpnState.Connected, TimeSpan.Zero, null, 0, 0) }
+		};
+		var vm = new MainViewModel(ras, clock);
+		vm.Refresh();
+		clock.Now += TimeSpan.FromSeconds(1);
+		ras.Entries = new List<VpnEntry> { new("A", VpnState.Connected, TimeSpan.Zero, null, 1000, 1000) };
+		vm.Refresh();
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		ras.Entries = new List<VpnEntry> { new("A", VpnState.Connected, TimeSpan.Zero, null, 5, 5) };
+		vm.Refresh();
+
+		Assert.Equal("↓ 5 B  ↑ 5 B", vm.Items[0].TrafficText);
+	}
 }

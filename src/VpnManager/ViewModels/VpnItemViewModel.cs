@@ -151,6 +151,42 @@ public class VpnItemViewModel : ViewModelBase {
 
 	public bool IsBusy => State == VpnState.Connecting;
 
+	private (DateTimeOffset At, long Received, long Sent)? _sample;
+	private double _downRate, _upRate;
+	private bool _hasRate;
+
+	private void ResetTraffic() {
+		_sample = null;
+		_hasRate = false;
+		TrafficText = null;
+	}
+
+	// Скорость = прирост счётчиков RAS между двумя опросами. Счётчики 32-битные: переполнение учитываем.
+	private void UpdateTraffic(VpnEntry entry) {
+		var now = _time.GetUtcNow();
+		if (_sample is { } s) {
+			var seconds = (now - s.At).TotalSeconds;
+			if (seconds >= 0.9) {
+				_downRate = Delta(entry.BytesReceived, s.Received) / seconds;
+				_upRate = Delta(entry.BytesSent, s.Sent) / seconds;
+				_hasRate = true;
+				_sample = (now, entry.BytesReceived, entry.BytesSent);
+			}
+		} else {
+			_sample = (now, entry.BytesReceived, entry.BytesSent);
+		}
+
+		var down = ByteFormatter.Format(entry.BytesReceived);
+		var up = ByteFormatter.Format(entry.BytesSent);
+		TrafficText = _hasRate
+			? $"↓ {down} ({ByteFormatter.FormatRate(_downRate)})  ↑ {up} ({ByteFormatter.FormatRate(_upRate)})"
+			: $"↓ {down}  ↑ {up}";
+	}
+
+	private static long Delta(long current, long previous) {
+		return current >= previous ? current - previous : current + (1L << 32) - previous;
+	}
+
 	/// <summary>Событие жизненного цикла соединения (обрыв, ошибка): для уведомлений.</summary>
 	public event Action<ConnectionEvent>? Happened;
 
@@ -169,16 +205,16 @@ public class VpnItemViewModel : ViewModelBase {
 				ErrorText = null;
 				State = VpnState.Connected;
 				DurationText = DurationFormatter.Format(entry.Duration ?? TimeSpan.Zero);
-				TrafficText = $"↓ {ByteFormatter.Format(entry.BytesReceived)}  ↑ {ByteFormatter.Format(entry.BytesSent)}";
+				UpdateTraffic(entry);
 				break;
 			case VpnState.Connecting:
 				State = VpnState.Connecting;
 				DurationText = null;
-				TrafficText = null;
+				ResetTraffic();
 				break;
 			default:
 				DurationText = null;
-				TrafficText = null;
+				ResetTraffic();
 				var dropped = State == VpnState.Connected;
 				if (State == VpnState.Error) {
 					// Ошибка видна ErrorLifetime после неудачи или до следующей попытки.
@@ -259,7 +295,7 @@ public class VpnItemViewModel : ViewModelBase {
 			// _pending не даёт опросу вернуть «Подключено», пока разрыв не завершён.
 			_pending++;
 			DurationText = null;
-			TrafficText = null;
+			ResetTraffic();
 			State = VpnState.Disconnected;
 			try {
 				await Task.Run(() => _ras.Disconnect(Name));

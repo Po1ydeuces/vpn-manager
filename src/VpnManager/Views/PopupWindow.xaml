@@ -117,10 +117,9 @@
                                         <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
                                                    TextTrimming="CharacterEllipsis" FontSize="14"
                                                    Foreground="{DynamicResource TextMain}" />
-                                        <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding StatusText}" FontSize="12"
                                                    Foreground="{DynamicResource TextMuted}" />
-                                            <TextBlock Text="{Binding TrafficText, StringFormat='  ·  {0}'}" FontSize="12"
+                                            <TextBlock Text="{Binding TrafficText}" ToolTip="{Binding TrafficText}" TextTrimming="CharacterEllipsis" FontSize="12"
                                                        Foreground="{DynamicResource TextMuted}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -133,7 +132,6 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                        </StackPanel>
                                         <TextBlock Text="{Binding ErrorText}" ToolTip="{Binding ErrorText}"
                                                    FontSize="12" TextWrapping="Wrap" MaxHeight="32"
                                                    TextTrimming="CharacterEllipsis"
