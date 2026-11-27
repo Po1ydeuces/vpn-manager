@@ -7,11 +7,13 @@ using VpnManager.ViewModels;
 namespace VpnManager.Views;
 
 public partial class PopupWindow : Window {
+	private const double EdgeGap = 12;
 	private ResourceDictionary? _theme;
 
 	public PopupWindow(MainViewModel vm) {
 		InitializeComponent();
 		DataContext = vm;
+		WindowBackdrop.Enable(this);
 	}
 
 	/// <summary>Время последнего скрытия: TrayHost по нему отличает «щелчок закрыл popup» от «щелчок открыл».</summary>
@@ -27,7 +29,9 @@ public partial class PopupWindow : Window {
 
 		var screen = System.Windows.Forms.Screen.FromPoint(anchorPx);
 		var wa = screen.WorkingArea;
+		// Зазор до краёв экрана и панели задач, как у системных панелей.
 		var workArea = new Rect(wa.Left / sx, wa.Top / sy, wa.Width / sx, wa.Height / sy);
+		workArea.Inflate(-EdgeGap, -EdgeGap);
 		var anchor = new Point(anchorPx.X / sx, anchorPx.Y / sy);
 
 		_workArea = workArea;
@@ -57,7 +61,9 @@ public partial class PopupWindow : Window {
 
 	private void ApplyTheme() {
 		if (_theme != null) Resources.MergedDictionaries.Remove(_theme);
-		_theme = ThemeResources.Load((DataContext as MainViewModel)?.Theme);
+		_theme = ThemeResources.Load((DataContext as MainViewModel)?.Theme, WindowBackdrop.IsSupported);
+		var tint = ThemeResources.PanelColor;
+		WindowBackdrop.SetTint(this, Color.FromArgb(0xB8, tint.R, tint.G, tint.B));
 		Resources.MergedDictionaries.Add(_theme);
 	}
 
