@@ -6,24 +6,26 @@ A lightweight Windows tray utility for managing the built-in VPN connections. Cl
 
 - Tray icon with a compact popup next to it; closes on focus loss or `Esc`.
 - Lists all built-in Windows VPN profiles (IKEv2, L2TP, SSTP, PPTP), sorted by name.
-- Pin favorite profiles to the top of the list (pin icon on row hover).
+- Row icons (shown on hover): pin to top, hide from the list, connect on app start, auto-reconnect. Hidden profiles are restored from the tray menu (**Hidden profiles**).
+- Optional per-profile connect on app start: flagged profiles are dialed right after the app launches.
 - Optional per-profile auto-reconnect: if a connection drops, it is re-dialed up to 5 times, 5 seconds apart. A manual click or turning the option off cancels it.
-- Per-profile status (disconnected / connecting / connected / error) and a live `hh:mm:ss` connection timer.
+- Per-profile status (disconnected / connecting / connected / error), a live `hh:mm:ss` connection timer and traffic counters (received / sent) for the current connection.
 - One-click connect and disconnect; clicking a profile that is still connecting cancels the attempt.
 - Several VPNs can be dialed in parallel.
 - Connection errors are shown in the popup and cleared automatically after 30 seconds.
 - Tray icon reflects whether any VPN is active.
 - Light and dark theme following the system setting.
 - English and Russian UI. Follows the system language by default; can be switched from the tray menu.
+- Global `Ctrl+Alt+V` hotkey toggles the popup (can be turned off in the tray menu; it is skipped if another app already uses it).
 - Autostart toggle, language selection and **Exit** in the tray icon's context menu.
-- Pins, auto-reconnect and language are stored in `%LOCALAPPDATA%\VpnManager\settings.json`.
+- Pins, hidden profiles, per-profile options, hotkey and language are stored in `%LOCALAPPDATA%\VpnManager\settings.json`.
 - Single instance only.
 - Low footprint: no administrator rights needed, a few MB of memory when idle.
 - Unhandled errors are written to `%LOCALAPPDATA%\VpnManager\error.log` instead of closing the app.
 
 ### Not included
 
-Creating, editing or deleting profiles, WireGuard/OpenVPN/vendor clients, traffic statistics, an installer or auto-update.
+Creating, editing or deleting profiles, WireGuard/OpenVPN/vendor clients, traffic history or graphs, an installer or auto-update.
 
 ## Requirements
 
