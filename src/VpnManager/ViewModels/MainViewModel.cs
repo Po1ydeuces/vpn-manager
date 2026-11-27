@@ -1,17 +1,23 @@
 using System.Collections.ObjectModel;
+using VpnManager.Localization;
 using VpnManager.Ras;
+using VpnManager.Settings;
 
 namespace VpnManager.ViewModels;
 
 public class MainViewModel : ViewModelBase {
 	private readonly IRasService _ras;
 	private readonly TimeProvider _time;
+	private readonly ISettingsStore _store;
+	private readonly AppSettings _settings;
 	private bool _isEmpty = true;
 	private bool _anyConnected;
 
-	public MainViewModel(IRasService ras, TimeProvider? time = null) {
+	public MainViewModel(IRasService ras, TimeProvider? time = null, ISettingsStore? store = null) {
 		_ras = ras;
 		_time = time ?? TimeProvider.System;
+		_store = store ?? new MemorySettingsStore();
+		_settings = _store.Load();
 	}
 
 	public ObservableCollection<VpnItemViewModel> Items { get; } = new();
@@ -24,6 +30,19 @@ public class MainViewModel : ViewModelBase {
 	public bool AnyConnected {
 		get => _anyConnected;
 		private set => Set(ref _anyConnected, value);
+	}
+
+	public string EmptyText => Loc.T("NoVpn");
+
+	/// <summary>"en", "ru" или null (по системному).</summary>
+	public string? Language => _settings.Language;
+
+	public void SetLanguage(string? language) {
+		_settings.Language = language;
+		_store.Save(_settings);
+		Loc.SetLanguage(language);
+		Raise(nameof(EmptyText));
+		foreach (var item in Items) item.RefreshStrings();
 	}
 
 	/// <summary>Один шаг опроса на вызывающем потоке (для тестов).</summary>

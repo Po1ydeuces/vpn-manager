@@ -51,7 +51,7 @@
             <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.35" />
         </Border.Effect>
         <Grid>
-            <TextBlock Text="Нет VPN-подключений" Foreground="{DynamicResource TextMuted}"
+            <TextBlock Text="{Binding EmptyText}" Foreground="{DynamicResource TextMuted}"
                        HorizontalAlignment="Center" Margin="0,16">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">

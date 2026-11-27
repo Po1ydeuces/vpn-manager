@@ -1,5 +1,7 @@
 ﻿using System.Windows;
+using VpnManager.Localization;
 using VpnManager.Ras;
+using VpnManager.Settings;
 using VpnManager.Tray;
 using VpnManager.ViewModels;
 using VpnManager.Views;
@@ -29,7 +31,9 @@ public partial class App : Application {
 			return;
 		}
 
-		var vm = new MainViewModel(new RasService());
+		var store = new JsonSettingsStore();
+		Loc.SetLanguage(store.Load().Language);
+		var vm = new MainViewModel(new RasService(), store: store);
 		var popup = new PopupWindow(vm);
 		_tray = new TrayHost(vm, popup);
 	}

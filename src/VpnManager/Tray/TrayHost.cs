@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using VpnManager.Localization;
 using VpnManager.ViewModels;
 using VpnManager.Views;
 using Forms = System.Windows.Forms;
@@ -19,23 +20,51 @@ public sealed class TrayHost : IDisposable {
 	private readonly DispatcherTimer _timer = new();
 	private readonly DispatcherTimer _trimTimer;
 	private readonly Forms.ToolStripMenuItem _autostartItem;
+	private readonly Forms.ToolStripMenuItem _exitItem;
+	private readonly Forms.ToolStripMenuItem _languageItem;
+
+	// null = язык системы; названия языков не переводятся
+	private static readonly (string? Code, string Name)[] Languages = { (null, ""), ("en", "English"), ("ru", "Русский") };
+
+	private void UpdateMenuTexts() {
+		_autostartItem.Text = Loc.T("Autostart");
+		_exitItem.Text = Loc.T("Exit");
+		_languageItem.Text = Loc.T("Language");
+		for (var i = 0; i < Languages.Length; i++) {
+			var item = (Forms.ToolStripMenuItem)_languageItem.DropDownItems[i];
+			item.Text = Languages[i].Code == null ? Loc.T("LanguageAuto") : Languages[i].Name;
+			item.Checked = Languages[i].Code == _vm.Language;
+		}
+	}
 
 	public TrayHost(MainViewModel vm, PopupWindow popup) {
 		_vm = vm;
 		_popup = popup;
 
-		_autostartItem = new Forms.ToolStripMenuItem("Запускать при старте Windows") { CheckOnClick = false };
+		_autostartItem = new Forms.ToolStripMenuItem { CheckOnClick = false };
 		_autostartItem.Click += (_, _) => {
 			Autostart.SetEnabled(!Autostart.IsEnabled());
 			_autostartItem.Checked = Autostart.IsEnabled();
 		};
-		var exitItem = new Forms.ToolStripMenuItem("Выход");
-		exitItem.Click += (_, _) => Application.Current.Shutdown();
+		_exitItem = new Forms.ToolStripMenuItem();
+		_exitItem.Click += (_, _) => Application.Current.Shutdown();
+
+		_languageItem = new Forms.ToolStripMenuItem();
+		foreach (var (code, _) in Languages) {
+			var item = new Forms.ToolStripMenuItem { Tag = code };
+			item.Click += (_, _) => {
+				_vm.SetLanguage(code);
+				UpdateMenuTexts();
+			};
+			_languageItem.DropDownItems.Add(item);
+		}
 
 		var menu = new Forms.ContextMenuStrip();
 		menu.Opening += (_, _) => _autostartItem.Checked = Autostart.IsEnabled();
 		menu.Items.Add(_autostartItem);
-		menu.Items.Add(exitItem);
+		menu.Items.Add(_languageItem);
+		menu.Items.Add(_exitItem);
+		UpdateMenuTexts();
 
 		_icon = new Forms.NotifyIcon {
 			Icon = _iconOff,

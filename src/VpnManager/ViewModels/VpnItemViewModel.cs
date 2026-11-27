@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using VpnManager.Localization;
 using VpnManager.Ras;
 
 namespace VpnManager.ViewModels;
@@ -38,11 +39,16 @@ public class VpnItemViewModel : ViewModelBase {
 	}
 
 	public string StatusText => State switch {
-		VpnState.Connecting => "Подключение…",
-		VpnState.Connected => "Подключено",
-		VpnState.Error => "Ошибка",
-		_ => "Отключено"
+		VpnState.Connecting => Loc.T("Connecting"),
+		VpnState.Connected => Loc.T("Connected"),
+		VpnState.Error => Loc.T("Error"),
+		_ => Loc.T("Disconnected")
 	};
+
+	/// <summary>Язык сменился: обновить локализованные строки.</summary>
+	public void RefreshStrings() {
+		Raise(nameof(StatusText));
+	}
 
 	public string? DurationText {
 		get => _durationText;
@@ -140,8 +146,8 @@ public class VpnItemViewModel : ViewModelBase {
 				State = VpnState.Connected;
 			} else {
 				ErrorText = result.CredentialsRequired
-					? "Требуется ввод учётных данных"
-					: result.ErrorText ?? "Не удалось подключиться";
+					? Loc.T("CredentialsRequired")
+					: result.ErrorText ?? Loc.T("ConnectFailed");
 				_errorAt = _time.GetUtcNow();
 				State = VpnState.Error;
 			}
