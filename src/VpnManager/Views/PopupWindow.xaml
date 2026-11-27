@@ -66,7 +66,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
-                        <Border Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource PanelBorder}"
+                        <Border Background="{DynamicResource MenuBg}" BorderBrush="{DynamicResource PanelBorder}"
                                 BorderThickness="1" CornerRadius="6" Padding="3">
                             <ItemsPresenter />
                         </Border>
