@@ -28,6 +28,15 @@ public static class TrayIcons {
 		}
 	}
 
+	/// <summary>Та же иконка как ImageSource — для значка окна WPF.</summary>
+	public static System.Windows.Media.ImageSource CreateImageSource(bool active) {
+		using var icon = Create(active);
+		var source = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+			icon.Handle, System.Windows.Int32Rect.Empty, System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+		source.Freeze();
+		return source;
+	}
+
 	[DllImport("user32.dll")]
 	private static extern bool DestroyIcon(IntPtr hIcon);
 }

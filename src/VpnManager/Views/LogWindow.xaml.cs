@@ -11,6 +11,7 @@ public partial class LogWindow : Window {
 		Resources.MergedDictionaries.Add(ThemeResources.Load(theme));
 		InitializeComponent();
 		Title = Loc.T("ConnectionLog");
+		Icon = VpnManager.Tray.TrayIcons.CreateImageSource(true);
 		RefreshBtn.Content = Loc.T("Refresh");
 		CopyBtn.Content = Loc.T("Copy");
 		Reload();
