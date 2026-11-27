@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using VpnManager.Localization;
+using VpnManager.Logging;
 using VpnManager.Ras;
 using VpnManager.Settings;
 using VpnManager.ViewModels;
@@ -266,7 +267,9 @@ public class PreferencesTests {
 		ras.Entries = new List<VpnEntry> { Off("A") };
 		vm.Refresh();
 
-		Assert.Empty(events);
+		var e = Assert.Single(events);
+		Assert.Equal(ConnectionEventKind.Disconnected, e.Kind);
+		Assert.False(e.Notify);
 	}
 
 	[Fact]
@@ -400,5 +403,82 @@ public class PreferencesTests {
 		vm.Refresh();
 
 		Assert.Equal("↓ 5 B  ↑ 5 B", vm.Items[0].TrafficText);
+	}
+
+	private sealed class ListLog : IConnectionLog {
+		public List<ConnectionEvent> Events { get; } = new();
+
+		public void Write(ConnectionEvent e) {
+			Events.Add(e);
+		}
+	}
+
+	[Fact]
+	public async Task Log_RecordsConnectAndManualDisconnectWithDuration() {
+		var clock = new FakeClock();
+		var log = new ListLog();
+		var ras = new FakeRasService { Entries = { Off("A") } };
+		var vm = new MainViewModel(ras, clock, log: log);
+		vm.Refresh();
+
+		await vm.Items[0].ToggleAsync(); // подключение
+		clock.Now += TimeSpan.FromMinutes(5);
+		await vm.Items[0].ToggleAsync(); // отключение
+
+		Assert.Equal(new[] { ConnectionEventKind.Connected, ConnectionEventKind.Disconnected },
+			log.Events.Select(e => e.Kind));
+		Assert.Equal(TimeSpan.FromMinutes(5), log.Events[1].Duration);
+	}
+
+	[Fact]
+	public void Log_DropOfConnectionFoundAtStartup_UsesDurationFromRas() {
+		var clock = new FakeClock();
+		var log = new ListLog();
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.FromMinutes(10)) } };
+		var vm = new MainViewModel(ras, clock, log: log);
+		vm.Refresh();
+
+		clock.Now += TimeSpan.FromMinutes(2);
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+
+		Assert.Equal(new[] { ConnectionEventKind.Connected, ConnectionEventKind.Dropped },
+			log.Events.Select(e => e.Kind));
+		Assert.Equal(TimeSpan.FromMinutes(12), log.Events[1].Duration);
+	}
+
+	[Fact]
+	public void Log_Format_IsReadableAndEnglish() {
+		var at = new DateTimeOffset(2026, 11, 27, 12, 31, 5, TimeSpan.Zero);
+
+		string Line(ConnectionEventKind k, TimeSpan? d = null, string? detail = null) {
+			var text = ConnectionLogFormatter.Format(new ConnectionEvent(at, "Work", k, d, detail));
+			return text[(text.IndexOf("  ", StringComparison.Ordinal) + 2)..]; // без локального времени
+		}
+
+		Assert.Equal("Work  Connected", Line(ConnectionEventKind.Connected));
+		Assert.Equal("Work  Connection dropped after 01:02:03", Line(ConnectionEventKind.Dropped, new TimeSpan(1, 2, 3)));
+		Assert.Equal("Work  Disconnected by user after 00:00:05", Line(ConnectionEventKind.Disconnected, TimeSpan.FromSeconds(5)));
+		Assert.Equal("Work  Connection failed: boom", Line(ConnectionEventKind.Failed, detail: "boom"));
+		Assert.Equal("Work  Auto-reconnect gave up: boom", Line(ConnectionEventKind.GaveUp, detail: "boom"));
+	}
+
+	[Fact]
+	public void FileLog_AppendsLinesAndTrimsHugeFileOnStart() {
+		var path = Path.Combine(Path.GetTempPath(), $"vpnmgr-{Guid.NewGuid():N}.log");
+		try {
+			File.WriteAllLines(path, Enumerable.Range(0, 30000).Select(i => $"line {i:D6} " + new string('x', 60)));
+			Assert.True(new FileInfo(path).Length > 1024 * 1024);
+
+			var log = new FileConnectionLog(path);
+			log.Write(new ConnectionEvent(DateTimeOffset.UtcNow, "A", ConnectionEventKind.Connected));
+
+			var lines = File.ReadAllLines(path);
+			Assert.Equal(2001, lines.Length);
+			Assert.EndsWith("A  Connected", lines[^1]);
+			Assert.StartsWith("line 028000", lines[0]);
+		} finally {
+			File.Delete(path);
+		}
 	}
 }

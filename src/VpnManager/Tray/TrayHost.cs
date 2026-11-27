@@ -26,6 +26,7 @@ public sealed class TrayHost : IDisposable {
 	private readonly Forms.ToolStripMenuItem _hiddenItem;
 	private readonly Forms.ToolStripMenuItem _notifyItem;
 	private readonly Forms.ToolStripMenuItem _themeItem;
+	private readonly Forms.ToolStripMenuItem _logItem;
 	private readonly GlobalHotkey _hotkey = new();
 
 	// null = язык системы; названия языков не переводятся
@@ -40,6 +41,7 @@ public sealed class TrayHost : IDisposable {
 		_hiddenItem.Text = Loc.T("HiddenProfiles");
 		_notifyItem.Text = Loc.T("Notifications");
 		_themeItem.Text = Loc.T("Theme");
+		_logItem.Text = Loc.T("ConnectionLog");
 		for (var i = 0; i < Themes.Length; i++) {
 			var item = (Forms.ToolStripMenuItem)_themeItem.DropDownItems[i];
 			item.Text = Loc.T(Themes[i].Key);
@@ -77,6 +79,14 @@ public sealed class TrayHost : IDisposable {
 		_exitItem.Click += (_, _) => Application.Current.Shutdown();
 
 		_hiddenItem = new Forms.ToolStripMenuItem();
+		_logItem = new Forms.ToolStripMenuItem();
+		_logItem.Click += (_, _) => {
+			try {
+				System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Logging.FileConnectionLog.DefaultPath) { UseShellExecute = true });
+			} catch {
+				// нет файла или нет программы для .log: ничего не делаем
+			}
+		};
 		_themeItem = new Forms.ToolStripMenuItem();
 		foreach (var (themeCode, _) in Themes) {
 			var item = new Forms.ToolStripMenuItem();
@@ -118,12 +128,14 @@ public sealed class TrayHost : IDisposable {
 		menu.Opening += (_, _) => {
 			_autostartItem.Checked = Autostart.IsEnabled();
 			FillHiddenMenu();
+			_logItem.Enabled = System.IO.File.Exists(Logging.FileConnectionLog.DefaultPath);
 		};
 		menu.Items.Add(_autostartItem);
 		menu.Items.Add(_languageItem);
 		menu.Items.Add(_hiddenItem);
 		menu.Items.Add(_notifyItem);
 		menu.Items.Add(_themeItem);
+		menu.Items.Add(_logItem);
 		menu.Items.Add(_hotkeyItem);
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();

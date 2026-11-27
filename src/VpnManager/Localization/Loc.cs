@@ -29,6 +29,7 @@ public static class Loc {
 		["ThemeAuto"] = ("Auto", "Авто"),
 		["ThemeLight"] = ("Light", "Светлая"),
 		["ThemeDark"] = ("Dark", "Тёмная"),
+		["ConnectionLog"] = ("Connection log", "Журнал подключений"),
 		["Notifications"] = ("Notifications", "Уведомления"),
 		["NotifyDropped"] = ("Connection lost", "Соединение потеряно"),
 		["NotifyGaveUp"] = ("Auto-reconnect gave up", "Автопереподключение не удалось")

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using VpnManager.Localization;
+using VpnManager.Logging;
 using VpnManager.Ras;
 using VpnManager.Settings;
 
@@ -11,16 +12,18 @@ public class MainViewModel : ViewModelBase {
 	private readonly ISettingsStore _store;
 	private readonly AppSettings _settings;
 	private readonly TimeSpan? _reconnectDelay;
+	private readonly IConnectionLog _log;
 	private bool _isEmpty = true;
 	private bool _anyConnected;
 
 	public MainViewModel(IRasService ras, TimeProvider? time = null, ISettingsStore? store = null,
-		TimeSpan? reconnectDelay = null) {
+		TimeSpan? reconnectDelay = null, IConnectionLog? log = null) {
 		_ras = ras;
 		_time = time ?? TimeProvider.System;
 		_store = store ?? new MemorySettingsStore();
 		_settings = _store.Load();
 		_reconnectDelay = reconnectDelay;
+		_log = log ?? new NullConnectionLog();
 	}
 
 	public ObservableCollection<VpnItemViewModel> Items { get; } = new();
@@ -113,7 +116,10 @@ public class MainViewModel : ViewModelBase {
 					IsHidden = _settings.Hidden.Contains(entry.Name)
 				};
 				item.PreferencesChanged += OnPreferencesChanged;
-				item.Happened += e => Happened?.Invoke(e);
+				item.Happened += e => {
+					_log.Write(e);
+					Happened?.Invoke(e);
+				};
 				Items.Add(item);
 			}
 

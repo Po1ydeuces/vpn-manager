@@ -191,6 +191,14 @@ public class VpnItemViewModel : ViewModelBase {
 	public event Action<ConnectionEvent>? Happened;
 
 	private bool _reconnecting; // идёт цикл автопереподключения: промежуточные ошибки тихие
+	private DateTimeOffset? _connectedSince;
+
+	// Сколько длилось соединение; обнуляет отсчёт.
+	private TimeSpan? TakeSessionDuration() {
+		var d = _connectedSince is { } since ? _time.GetUtcNow() - since : (TimeSpan?)null;
+		_connectedSince = null;
+		return d;
+	}
 
 	private void Emit(ConnectionEventKind kind, string? detail = null, TimeSpan? duration = null, bool notify = true) {
 		Happened?.Invoke(new ConnectionEvent(_time.GetUtcNow(), Name, kind, duration, detail, notify));
@@ -202,6 +210,12 @@ public class VpnItemViewModel : ViewModelBase {
 
 		switch (entry.State) {
 			case VpnState.Connected:
+				if (State != VpnState.Connected) {
+					// Подключено не нами (или до запуска приложения): время старта берём из RAS.
+					_connectedSince = _time.GetUtcNow() - (entry.Duration ?? TimeSpan.Zero);
+					Emit(ConnectionEventKind.Connected, notify: false);
+				}
+
 				ErrorText = null;
 				State = VpnState.Connected;
 				DurationText = DurationFormatter.Format(entry.Duration ?? TimeSpan.Zero);
@@ -225,7 +239,7 @@ public class VpnItemViewModel : ViewModelBase {
 				State = VpnState.Disconnected;
 				// Соединение оборвалось само (наш разрыв ставит Disconnected до опроса).
 				if (dropped) {
-					Emit(ConnectionEventKind.Dropped);
+					Emit(ConnectionEventKind.Dropped, duration: TakeSessionDuration());
 					if (AutoReconnect) StartReconnect();
 				}
 
@@ -294,6 +308,7 @@ public class VpnItemViewModel : ViewModelBase {
 			// RasHangUp синхронный и может занять секунды: в фон, UI сразу показывает «Отключено».
 			// _pending не даёт опросу вернуть «Подключено», пока разрыв не завершён.
 			_pending++;
+			Emit(ConnectionEventKind.Disconnected, duration: TakeSessionDuration(), notify: false);
 			DurationText = null;
 			ResetTraffic();
 			State = VpnState.Disconnected;
@@ -330,6 +345,8 @@ public class VpnItemViewModel : ViewModelBase {
 			} else if (result.Success) {
 				DurationText = DurationFormatter.Format(TimeSpan.Zero);
 				State = VpnState.Connected;
+				_connectedSince = _time.GetUtcNow();
+				Emit(ConnectionEventKind.Connected, notify: false);
 			} else {
 				ErrorText = result.CredentialsRequired
 					? Loc.T("CredentialsRequired")
