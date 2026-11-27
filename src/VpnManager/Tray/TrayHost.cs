@@ -133,6 +133,7 @@ public sealed class TrayHost : IDisposable {
 		menu.Opening += (_, _) => {
 			_autostartItem.Checked = Autostart.IsEnabled();
 			FillHiddenMenu();
+			ModernMenu.Apply(menu, Views.ThemeResources.UsesLight(_vm.Theme));
 		};
 		menu.Items.Add(_autostartItem);
 		menu.Items.Add(_languageItem);
@@ -141,6 +142,7 @@ public sealed class TrayHost : IDisposable {
 		menu.Items.Add(_themeItem);
 		menu.Items.Add(_logItem);
 		menu.Items.Add(_hotkeyItem);
+		menu.Items.Add(new Forms.ToolStripSeparator());
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();
 

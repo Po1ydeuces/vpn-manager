@@ -11,19 +11,21 @@ public static class ThemeResources {
 	/// <summary>Цвет фона панели после последнего Load.</summary>
 	public static Color PanelColor { get; private set; }
 
+	/// <summary>Светлая ли тема для настройки: "light", "dark" или null (по системной).</summary>
+	public static bool UsesLight(string? theme) => theme switch {
+		"light" => true,
+		"dark" => false,
+		_ => Registry.GetValue(
+			@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+			"AppsUseLightTheme", 1) is not int v || v != 0
+	};
+
 	/// <summary>
 	/// Словарь светлой или тёмной темы. theme: "light", "dark" или null (по системной).
 	/// acrylic: фон делается полупрозрачным, чтобы под ним был виден системный акрил окна.
 	/// </summary>
 	public static ResourceDictionary Load(string? theme, bool acrylic = false) {
-		var systemLight = Registry.GetValue(
-			@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
-			"AppsUseLightTheme", 1) is not int v || v != 0;
-		var light = theme switch {
-			"light" => true,
-			"dark" => false,
-			_ => systemLight
-		};
+		var light = UsesLight(theme);
 
 		var baseTheme = new ResourceDictionary {
 			Source = new Uri($"/VpnManager;component/Views/Themes/{(light ? "Light" : "Dark")}.xaml", UriKind.Relative)
@@ -45,6 +47,7 @@ public static class ThemeResources {
 		result["PanelBg"] = Frozen(bg, acrylic ? (byte)0x01 : (byte)0xFF);
 		result["PanelBorder"] = Frozen(Blend(bg, edge, 0.2));
 		result["RowHover"] = Frozen(Blend(bg, edge, 0.12));
+		result["MenuBg"] = Frozen(Blend(bg, dark ? Colors.Black : Colors.White, 0.5));
 		if (taskbar != null) {
 			result["TextMain"] = Frozen(dark ? Color.FromRgb(0xF2, 0xF2, 0xF2) : Color.FromRgb(0x1A, 0x1A, 0x1A));
 			result["TextMuted"] = Frozen(Blend(bg, edge, 0.65));
