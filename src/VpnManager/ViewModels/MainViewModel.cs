@@ -87,7 +87,7 @@ public class MainViewModel : ViewModelBase {
 		_store.Save(_settings);
 		Loc.SetLanguage(language);
 		Raise(nameof(EmptyText));
-		Raise(nameof(ConnectAllTip));
+		Raise(nameof(ConnectPinnedTip));
 		Raise(nameof(DisconnectAllTip));
 		Raise(nameof(SettingsTip));
 		foreach (var item in Items) item.RefreshStrings();
@@ -143,9 +143,12 @@ public class MainViewModel : ViewModelBase {
 		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
 	}
 
-	/// <summary>Подключить все видимые отключённые профили (скрытые не трогаем).</summary>
-	public Task ConnectAllAsync() {
-		var targets = Items.Where(x => !x.IsHidden && x.State is VpnState.Disconnected or VpnState.Error).ToList();
+	/// <summary>
+	/// Подключить закреплённые отключённые профили (скрытые не трогаем). Только закреплённые:
+	/// Windows ограничивает число одновременных VPN, «все» упирается в лимит.
+	/// </summary>
+	public Task ConnectPinnedAsync() {
+		var targets = Items.Where(x => x.IsPinned && !x.IsHidden && x.State is VpnState.Disconnected or VpnState.Error).ToList();
 		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
 	}
 
@@ -155,11 +158,11 @@ public class MainViewModel : ViewModelBase {
 		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
 	}
 
-	public ICommand ConnectAllCommand => _connectAll ??= new RelayCommand(ConnectAllAsync);
+	public ICommand ConnectPinnedCommand => _connectAll ??= new RelayCommand(ConnectPinnedAsync);
 
 	public ICommand DisconnectAllCommand => _disconnectAll ??= new RelayCommand(DisconnectAllAsync);
 
-	public string ConnectAllTip => Loc.T("ConnectAll");
+	public string ConnectPinnedTip => Loc.T("ConnectPinned");
 
 	public string DisconnectAllTip => Loc.T("DisconnectAll");
 

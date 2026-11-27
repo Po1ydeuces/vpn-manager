@@ -164,14 +164,15 @@ public class PreferencesTests {
 	}
 
 	[Fact]
-	public async Task ConnectAll_ConnectsVisibleDisconnectedProfiles() {
-		var ras = new FakeRasService { Entries = { Off("A"), Off("B"), On("C", TimeSpan.Zero), Off("D") } };
+	public async Task ConnectPinned_ConnectsOnlyPinnedVisibleDisconnectedProfiles() {
+		var ras = new FakeRasService { Entries = { Off("A"), Off("B"), On("C", TimeSpan.Zero), Off("D"), Off("E"), Off("F") } };
 		var vm = Create(ras);
-		vm.Items[3].IsHidden = true; // D скрыт
+		foreach (var name in new[] { "A", "C", "D", "E" }) vm.Items.Single(x => x.Name == name).IsPinned = true;
+		vm.Items.Single(x => x.Name == "D").IsHidden = true; // D скрыт, B и F не закреплены, C уже подключён
 
-		await vm.ConnectAllAsync();
+		await vm.ConnectPinnedAsync();
 
-		Assert.Equal(new[] { "A", "B" }, ras.ConnectCalls.OrderBy(x => x));
+		Assert.Equal(new[] { "A", "E" }, ras.ConnectCalls.OrderBy(x => x));
 	}
 
 	[Fact]

@@ -10,7 +10,7 @@ A lightweight Windows tray utility for managing the built-in VPN connections. Cl
 - Optional per-profile connect on app start: flagged profiles are dialed right after the app launches.
 - Optional per-profile auto-reconnect: if a connection drops, it is re-dialed up to 5 times, 5 seconds apart. A manual click or turning the option off cancels it.
 - Per-profile state shown by the colored dot (grey = disconnected, yellow = connecting, green = connected, red = error), a live `hh:mm:ss` connection timer and the current transfer speed; hover the speed line for total bytes received / sent.
-- Header buttons at the top of the popup: connect all (visible, disconnected profiles), disconnect all, and a gear that opens Windows *Settings → Network → VPN*.
+- Header buttons at the top of the popup: connect pinned (only pinned profiles, since Windows limits the number of simultaneous VPN connections), disconnect all, and a gear that opens Windows *Settings → Network → VPN*.
 - One-click connect and disconnect; clicking a profile that is still connecting cancels the attempt.
 - Several VPNs can be dialed in parallel.
 - Connection errors are shown in the popup and cleared automatically after 30 seconds.

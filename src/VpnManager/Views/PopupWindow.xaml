@@ -124,7 +124,7 @@
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,4,2">
                 <Button Style="{StaticResource HeaderButton}" Content="&#xE768;"
-                        Command="{Binding ConnectAllCommand}" ToolTip="{Binding ConnectAllTip}" />
+                        Command="{Binding ConnectPinnedCommand}" ToolTip="{Binding ConnectPinnedTip}" />
                 <Button Style="{StaticResource HeaderButton}" Content="&#xE71A;"
                         Command="{Binding DisconnectAllCommand}" ToolTip="{Binding DisconnectAllTip}" />
                 <Button Style="{StaticResource HeaderButton}" Content="&#xE713;"
