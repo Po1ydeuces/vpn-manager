@@ -57,6 +57,11 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="HeaderButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Margin" Value="2,0,0,0" />
+        </Style>
+
         <Style x:Key="PopupMenu" TargetType="ContextMenu">
             <Setter Property="Template">
                 <Setter.Value>
@@ -113,7 +118,19 @@
             <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.35" />
         </Border.Effect>
         <Grid>
-            <TextBlock Text="{Binding EmptyText}" Foreground="{DynamicResource TextMuted}"
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,4,2">
+                <Button Style="{StaticResource HeaderButton}" Content="&#xE768;"
+                        Command="{Binding ConnectAllCommand}" ToolTip="{Binding ConnectAllTip}" />
+                <Button Style="{StaticResource HeaderButton}" Content="&#xE71A;"
+                        Command="{Binding DisconnectAllCommand}" ToolTip="{Binding DisconnectAllTip}" />
+                <Button Style="{StaticResource HeaderButton}" Content="&#xE713;"
+                        Click="Settings_Click" ToolTip="{Binding SettingsTip}" />
+            </StackPanel>
+            <TextBlock Grid.Row="1" Text="{Binding EmptyText}" Foreground="{DynamicResource TextMuted}"
                        HorizontalAlignment="Center" Margin="0,16">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -127,7 +144,7 @@
                 </TextBlock.Style>
             </TextBlock>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

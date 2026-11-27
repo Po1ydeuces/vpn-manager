@@ -164,6 +164,28 @@ public class PreferencesTests {
 	}
 
 	[Fact]
+	public async Task ConnectAll_ConnectsVisibleDisconnectedProfiles() {
+		var ras = new FakeRasService { Entries = { Off("A"), Off("B"), On("C", TimeSpan.Zero), Off("D") } };
+		var vm = Create(ras);
+		vm.Items[3].IsHidden = true; // D скрыт
+
+		await vm.ConnectAllAsync();
+
+		Assert.Equal(new[] { "A", "B" }, ras.ConnectCalls.OrderBy(x => x));
+	}
+
+	[Fact]
+	public async Task DisconnectAll_HangsUpConnectedProfiles() {
+		var ras = new FakeRasService { Entries = { Off("A"), On("B", TimeSpan.Zero), On("C", TimeSpan.Zero) } };
+		var vm = Create(ras);
+
+		await vm.DisconnectAllAsync();
+
+		Assert.Equal(new[] { "B", "C" }, ras.DisconnectCalls.OrderBy(x => x));
+		Assert.Empty(ras.ConnectCalls);
+	}
+
+	[Fact]
 	public void ConnectOnStart_IsPersisted() {
 		var store = new MemorySettingsStore();
 		var ras = new FakeRasService { Entries = { Off("A"), Off("B") } };

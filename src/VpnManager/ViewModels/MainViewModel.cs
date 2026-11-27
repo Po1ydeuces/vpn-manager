@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using VpnManager.Localization;
 using VpnManager.Logging;
 using VpnManager.Ras;
@@ -15,6 +16,8 @@ public class MainViewModel : ViewModelBase {
 	private readonly IConnectionLog _log;
 	private bool _isEmpty = true;
 	private bool _anyConnected;
+	private ICommand? _connectAll;
+	private ICommand? _disconnectAll;
 
 	public MainViewModel(IRasService ras, TimeProvider? time = null, ISettingsStore? store = null,
 		TimeSpan? reconnectDelay = null, IConnectionLog? log = null) {
@@ -84,6 +87,9 @@ public class MainViewModel : ViewModelBase {
 		_store.Save(_settings);
 		Loc.SetLanguage(language);
 		Raise(nameof(EmptyText));
+		Raise(nameof(ConnectAllTip));
+		Raise(nameof(DisconnectAllTip));
+		Raise(nameof(SettingsTip));
 		foreach (var item in Items) item.RefreshStrings();
 	}
 
@@ -136,6 +142,28 @@ public class MainViewModel : ViewModelBase {
 		var targets = Items.Where(x => x.ConnectOnStart && x.State == VpnState.Disconnected).ToList();
 		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
 	}
+
+	/// <summary>Подключить все видимые отключённые профили (скрытые не трогаем).</summary>
+	public Task ConnectAllAsync() {
+		var targets = Items.Where(x => !x.IsHidden && x.State is VpnState.Disconnected or VpnState.Error).ToList();
+		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
+	}
+
+	/// <summary>Отключить все подключённые и подключающиеся профили, включая скрытые.</summary>
+	public Task DisconnectAllAsync() {
+		var targets = Items.Where(x => x.State is VpnState.Connected or VpnState.Connecting).ToList();
+		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
+	}
+
+	public ICommand ConnectAllCommand => _connectAll ??= new RelayCommand(ConnectAllAsync);
+
+	public ICommand DisconnectAllCommand => _disconnectAll ??= new RelayCommand(DisconnectAllAsync);
+
+	public string ConnectAllTip => Loc.T("ConnectAll");
+
+	public string DisconnectAllTip => Loc.T("DisconnectAll");
+
+	public string SettingsTip => Loc.T("VpnSettings");
 
 	/// <summary>Имена скрытых профилей (для меню трея).</summary>
 	public IReadOnlyList<string> HiddenNames => Items.Where(x => x.IsHidden).Select(x => x.Name).ToList();

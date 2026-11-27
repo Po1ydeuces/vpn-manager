@@ -73,6 +73,17 @@ public partial class PopupWindow : Window {
 		Resources.MergedDictionaries.Add(_theme);
 	}
 
+	private void Settings_Click(object sender, RoutedEventArgs e) {
+		Hide();
+		try {
+			System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:network-vpn") {
+				UseShellExecute = true
+			});
+		} catch {
+			// нет обработчика ms-settings — нечего делать
+		}
+	}
+
 	private void Window_KeyDown(object sender, KeyEventArgs e) {
 		if (e.Key == Key.Escape) Hide();
 	}
