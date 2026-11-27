@@ -64,24 +64,39 @@ public class MainViewModel : ViewModelBase {
 			if (!entries.Any(e => e.Name == Items[i].Name))
 				Items.RemoveAt(i);
 
-		foreach (var entry in entries.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase)) {
+		foreach (var entry in entries) {
 			var item = Items.FirstOrDefault(x => x.Name == entry.Name);
 			if (item == null) {
-				item = new VpnItemViewModel(entry.Name, _ras, _time);
+				item = new VpnItemViewModel(entry.Name, _ras, _time) {
+					IsPinned = _settings.Pinned.Contains(entry.Name)
+				};
+				item.PreferencesChanged += OnPreferencesChanged;
 				Items.Add(item);
 			}
 
 			item.Apply(entry);
 		}
 
-		// Привести порядок к сортировке по имени, не пересоздавая элементы.
-		var sorted = Items.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+		Resort();
+		IsEmpty = Items.Count == 0;
+		AnyConnected = Items.Any(x => x.State == VpnState.Connected);
+	}
+
+	private void OnPreferencesChanged() {
+		_settings.Pinned = Items.Where(x => x.IsPinned).Select(x => x.Name).ToList();
+		_store.Save(_settings);
+		Resort();
+	}
+
+	// Закреплённые сверху, внутри групп по имени. Элементы не пересоздаются, только двигаются.
+	private void Resort() {
+		var sorted = Items
+			.OrderByDescending(x => x.IsPinned)
+			.ThenBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
+			.ToList();
 		for (var i = 0; i < sorted.Count; i++) {
 			var cur = Items.IndexOf(sorted[i]);
 			if (cur != i) Items.Move(cur, i);
 		}
-
-		IsEmpty = Items.Count == 0;
-		AnyConnected = Items.Any(x => x.State == VpnState.Connected);
 	}
 }

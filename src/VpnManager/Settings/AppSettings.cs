@@ -4,6 +4,7 @@ using System.Text.Json;
 namespace VpnManager.Settings;
 
 public class AppSettings {
+	public List<string> Pinned { get; set; } = new();
 
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language { get; set; }

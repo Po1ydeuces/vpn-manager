@@ -12,6 +12,7 @@ public class VpnItemViewModel : ViewModelBase {
 	private VpnState _state;
 	private string? _durationText;
 	private string? _errorText;
+	private bool _isPinned;
 
 	/// <summary>Сколько ошибка остаётся видимой.</summary>
 	public static readonly TimeSpan ErrorLifetime = TimeSpan.FromSeconds(30);
@@ -24,10 +25,29 @@ public class VpnItemViewModel : ViewModelBase {
 		_ras = ras;
 		_time = time ?? TimeProvider.System;
 		ToggleCommand = new RelayCommand(ToggleAsync);
+		TogglePinCommand = new RelayCommand(() => {
+			IsPinned = !IsPinned;
+			return Task.CompletedTask;
+		});
 	}
 
 	public string Name { get; }
 	public ICommand ToggleCommand { get; }
+	public ICommand TogglePinCommand { get; }
+
+	/// <summary>Пользователь изменил закрепление (нужно сохранить и пересортировать).</summary>
+	public event Action? PreferencesChanged;
+
+	public bool IsPinned {
+		get => _isPinned;
+		set {
+			if (!Set(ref _isPinned, value)) return;
+			Raise(nameof(PinTip));
+			PreferencesChanged?.Invoke();
+		}
+	}
+
+	public string PinTip => Loc.T(IsPinned ? "Unpin" : "Pin");
 
 	public VpnState State {
 		get => _state;
@@ -48,6 +68,7 @@ public class VpnItemViewModel : ViewModelBase {
 	/// <summary>Язык сменился: обновить локализованные строки.</summary>
 	public void RefreshStrings() {
 		Raise(nameof(StatusText));
+		Raise(nameof(PinTip));
 	}
 
 	public string? DurationText {

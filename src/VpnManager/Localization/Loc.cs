@@ -15,7 +15,9 @@ public static class Loc {
 		["Autostart"] = ("Start with Windows", "Запускать при старте Windows"),
 		["Exit"] = ("Exit", "Выход"),
 		["Language"] = ("Language", "Язык"),
-		["LanguageAuto"] = ("Auto", "Авто")
+		["LanguageAuto"] = ("Auto", "Авто"),
+		["Pin"] = ("Pin to top", "Закрепить"),
+		["Unpin"] = ("Unpin", "Открепить")
 	};
 
 	private static bool _ru;
