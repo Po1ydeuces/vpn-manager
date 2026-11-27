@@ -37,6 +37,13 @@ public class PopupPositionerTests {
 	}
 
 	[Fact]
+	public void TaskbarBottom_SnapsToNearestHorizontalEdge() {
+		var wa = new Rect(12, 12, 1896, 1016);
+		Assert.Equal(wa.Right - S.Width, PopupPositioner.Calculate(wa, new Point(1700, 1045), S).X);
+		Assert.Equal(wa.Left, PopupPositioner.Calculate(wa, new Point(100, 1045), S).X);
+	}
+
+	[Fact]
 	public void PopupTallerThanWorkArea_PinnedToTop() {
 		var wa = new Rect(0, 0, 1920, 1040);
 		var p = PopupPositioner.Calculate(wa, new Point(1800, 1045), new Size(300, 1500));
