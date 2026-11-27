@@ -141,6 +141,8 @@
                                 </Grid>
                             </Button>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="HideBtn" Style="{StaticResource IconButton}" Content="&#xE711;"
+                                        Command="{Binding HideCommand}" ToolTip="{Binding HideTip}" />
                                 <Button x:Name="StartBtn" Style="{StaticResource IconButton}" Content="&#xE7E8;"
                                         Command="{Binding ToggleConnectOnStartCommand}"
                                         ToolTip="{Binding ConnectOnStartTip}" Tag="{Binding ConnectOnStart}" />
@@ -155,9 +157,13 @@
                             <DataTemplate.Triggers>
                                 <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
                                     <Setter TargetName="ReconnectBtn" Property="Opacity" Value="1" />
+                                    <Setter TargetName="HideBtn" Property="Opacity" Value="1" />
                                     <Setter TargetName="StartBtn" Property="Opacity" Value="1" />
                                     <Setter TargetName="PinBtn" Property="Opacity" Value="1" />
                                 </Trigger>
+                                <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                    <Setter TargetName="Row" Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

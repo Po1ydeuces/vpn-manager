@@ -23,6 +23,7 @@ public sealed class TrayHost : IDisposable {
 	private readonly Forms.ToolStripMenuItem _exitItem;
 	private readonly Forms.ToolStripMenuItem _languageItem;
 	private readonly Forms.ToolStripMenuItem _hotkeyItem;
+	private readonly Forms.ToolStripMenuItem _hiddenItem;
 	private readonly GlobalHotkey _hotkey = new();
 
 	// null = язык системы; названия языков не переводятся
@@ -33,11 +34,24 @@ public sealed class TrayHost : IDisposable {
 		_exitItem.Text = Loc.T("Exit");
 		_languageItem.Text = Loc.T("Language");
 		_hotkeyItem.Text = Loc.T("Hotkey");
+		_hiddenItem.Text = Loc.T("HiddenProfiles");
 		for (var i = 0; i < Languages.Length; i++) {
 			var item = (Forms.ToolStripMenuItem)_languageItem.DropDownItems[i];
 			item.Text = Languages[i].Code == null ? Loc.T("LanguageAuto") : Languages[i].Name;
 			item.Checked = Languages[i].Code == _vm.Language;
 		}
+	}
+
+	// Скрытые профили: каждый пункт возвращает профиль в список.
+	private void FillHiddenMenu() {
+		_hiddenItem.DropDownItems.Clear();
+		foreach (var name in _vm.HiddenNames) {
+			var item = new Forms.ToolStripMenuItem(name);
+			item.Click += (_, _) => _vm.Unhide(name);
+			_hiddenItem.DropDownItems.Add(item);
+		}
+
+		_hiddenItem.Enabled = _hiddenItem.DropDownItems.Count > 0;
 	}
 
 	public TrayHost(MainViewModel vm, PopupWindow popup) {
@@ -52,6 +66,7 @@ public sealed class TrayHost : IDisposable {
 		_exitItem = new Forms.ToolStripMenuItem();
 		_exitItem.Click += (_, _) => Application.Current.Shutdown();
 
+		_hiddenItem = new Forms.ToolStripMenuItem();
 		_hotkeyItem = new Forms.ToolStripMenuItem();
 		_hotkeyItem.Click += (_, _) => {
 			if (_hotkey.IsRegistered) _hotkey.Unregister();
@@ -74,9 +89,13 @@ public sealed class TrayHost : IDisposable {
 		}
 
 		var menu = new Forms.ContextMenuStrip();
-		menu.Opening += (_, _) => _autostartItem.Checked = Autostart.IsEnabled();
+		menu.Opening += (_, _) => {
+			_autostartItem.Checked = Autostart.IsEnabled();
+			FillHiddenMenu();
+		};
 		menu.Items.Add(_autostartItem);
 		menu.Items.Add(_languageItem);
+		menu.Items.Add(_hiddenItem);
 		menu.Items.Add(_hotkeyItem);
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();

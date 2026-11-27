@@ -22,7 +22,9 @@ public static class Loc {
 		["AutoReconnectOff"] = ("Auto-reconnect: off", "Автопереподключение: выкл"),
 		["ConnectOnStartOn"] = ("Connect on app start: on", "Подключать при запуске: вкл"),
 		["ConnectOnStartOff"] = ("Connect on app start: off", "Подключать при запуске: выкл"),
-		["Hotkey"] = ("Global hotkey (Ctrl+Alt+V)", "Глобальная горячая клавиша (Ctrl+Alt+V)")
+		["Hotkey"] = ("Global hotkey (Ctrl+Alt+V)", "Глобальная горячая клавиша (Ctrl+Alt+V)"),
+		["Hide"] = ("Hide from list", "Скрыть из списка"),
+		["HiddenProfiles"] = ("Hidden profiles", "Скрытые профили")
 	};
 
 	private static bool _ru;

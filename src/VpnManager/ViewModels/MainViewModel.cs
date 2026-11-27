@@ -80,7 +80,8 @@ public class MainViewModel : ViewModelBase {
 				item = new VpnItemViewModel(entry.Name, _ras, _time, _reconnectDelay) {
 					IsPinned = _settings.Pinned.Contains(entry.Name),
 					AutoReconnect = _settings.AutoReconnect.Contains(entry.Name),
-					ConnectOnStart = _settings.ConnectOnStart.Contains(entry.Name)
+					ConnectOnStart = _settings.ConnectOnStart.Contains(entry.Name),
+					IsHidden = _settings.Hidden.Contains(entry.Name)
 				};
 				item.PreferencesChanged += OnPreferencesChanged;
 				Items.Add(item);
@@ -90,7 +91,7 @@ public class MainViewModel : ViewModelBase {
 		}
 
 		Resort();
-		IsEmpty = Items.Count == 0;
+		IsEmpty = Items.All(x => x.IsHidden);
 		AnyConnected = Items.Any(x => x.State == VpnState.Connected);
 	}
 
@@ -100,12 +101,22 @@ public class MainViewModel : ViewModelBase {
 		return Task.WhenAll(targets.Select(x => x.ToggleAsync()));
 	}
 
+	/// <summary>Имена скрытых профилей (для меню трея).</summary>
+	public IReadOnlyList<string> HiddenNames => Items.Where(x => x.IsHidden).Select(x => x.Name).ToList();
+
+	public void Unhide(string name) {
+		var item = Items.FirstOrDefault(x => x.Name == name);
+		if (item != null) item.IsHidden = false;
+	}
+
 	private void OnPreferencesChanged() {
 		_settings.Pinned = Items.Where(x => x.IsPinned).Select(x => x.Name).ToList();
 		_settings.AutoReconnect = Items.Where(x => x.AutoReconnect).Select(x => x.Name).ToList();
 		_settings.ConnectOnStart = Items.Where(x => x.ConnectOnStart).Select(x => x.Name).ToList();
+		_settings.Hidden = Items.Where(x => x.IsHidden).Select(x => x.Name).ToList();
 		_store.Save(_settings);
 		Resort();
+		IsEmpty = Items.All(x => x.IsHidden);
 	}
 
 	// Закреплённые сверху, внутри групп по имени. Элементы не пересоздаются, только двигаются.

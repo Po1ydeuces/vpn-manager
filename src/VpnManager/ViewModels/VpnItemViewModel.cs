@@ -16,6 +16,7 @@ public class VpnItemViewModel : ViewModelBase {
 	private bool _isPinned;
 	private bool _autoReconnect;
 	private bool _connectOnStart;
+	private bool _isHidden;
 
 	/// <summary>Сколько ошибка остаётся видимой.</summary>
 	public static readonly TimeSpan ErrorLifetime = TimeSpan.FromSeconds(30);
@@ -37,6 +38,10 @@ public class VpnItemViewModel : ViewModelBase {
 			IsPinned = !IsPinned;
 			return Task.CompletedTask;
 		});
+		HideCommand = new RelayCommand(() => {
+			IsHidden = true;
+			return Task.CompletedTask;
+		});
 		ToggleConnectOnStartCommand = new RelayCommand(() => {
 			ConnectOnStart = !ConnectOnStart;
 			return Task.CompletedTask;
@@ -52,6 +57,7 @@ public class VpnItemViewModel : ViewModelBase {
 	public ICommand TogglePinCommand { get; }
 	public ICommand ToggleAutoReconnectCommand { get; }
 	public ICommand ToggleConnectOnStartCommand { get; }
+	public ICommand HideCommand { get; }
 
 	/// <summary>Пользователь изменил закрепление или автопереподключение (нужно сохранить и пересортировать).</summary>
 	public event Action? PreferencesChanged;
@@ -76,6 +82,17 @@ public class VpnItemViewModel : ViewModelBase {
 	}
 
 	public string PinTip => Loc.T(IsPinned ? "Unpin" : "Pin");
+
+	/// <summary>Профиль скрыт из списка (опрос и автофункции продолжают работать).</summary>
+	public bool IsHidden {
+		get => _isHidden;
+		set {
+			if (!Set(ref _isHidden, value)) return;
+			PreferencesChanged?.Invoke();
+		}
+	}
+
+	public string HideTip => Loc.T("Hide");
 
 	/// <summary>Подключать профиль при запуске приложения.</summary>
 	public bool ConnectOnStart {
@@ -112,6 +129,7 @@ public class VpnItemViewModel : ViewModelBase {
 		Raise(nameof(PinTip));
 		Raise(nameof(AutoReconnectTip));
 		Raise(nameof(ConnectOnStartTip));
+		Raise(nameof(HideTip));
 	}
 
 	public string? DurationText {

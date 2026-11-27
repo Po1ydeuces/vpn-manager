@@ -7,6 +7,7 @@ public class AppSettings {
 	public List<string> Pinned { get; set; } = new();
 	public List<string> AutoReconnect { get; set; } = new();
 	public List<string> ConnectOnStart { get; set; } = new();
+	public List<string> Hidden { get; set; } = new();
 
 	/// <summary>Ctrl+Alt+V открывает popup.</summary>
 	public bool HotkeyEnabled { get; set; } = true;

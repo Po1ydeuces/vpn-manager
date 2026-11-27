@@ -184,4 +184,31 @@ public class PreferencesTests {
 
 		Assert.False(Create(new FakeRasService(), store).HotkeyEnabled);
 	}
+
+	[Fact]
+	public void Hide_RemovesFromVisibleSet_PersistsAndUnhides() {
+		var store = new MemorySettingsStore();
+		var ras = new FakeRasService { Entries = { Off("A"), Off("B") } };
+		var vm = Create(ras, store);
+
+		vm.Items[0].HideCommand.Execute(null);
+
+		Assert.Equal(new[] { "A" }, vm.HiddenNames);
+		Assert.False(vm.IsEmpty);
+		Assert.Equal(new[] { "A" }, Create(ras, store).HiddenNames);
+
+		vm.Unhide("A");
+		Assert.Empty(vm.HiddenNames);
+		Assert.Empty(store.Load().Hidden);
+	}
+
+	[Fact]
+	public void Hide_AllProfiles_IsEmpty_ButConnectedStateStillTracked() {
+		var vm = Create(new FakeRasService { Entries = { On("A", TimeSpan.Zero) } });
+
+		vm.Items[0].IsHidden = true;
+
+		Assert.True(vm.IsEmpty);
+		Assert.True(vm.AnyConnected);
+	}
 }
