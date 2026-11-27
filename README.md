@@ -6,10 +6,10 @@ A lightweight Windows tray utility for managing the built-in VPN connections. Cl
 
 - Tray icon with a compact popup next to it; closes on focus loss or `Esc`.
 - Lists all built-in Windows VPN profiles (IKEv2, L2TP, SSTP, PPTP), sorted by name.
-- Row icons (shown on hover): pin to top, hide from the list, connect on app start, auto-reconnect. Hidden profiles are restored from the tray menu (**Hidden profiles**).
+- Row icons (shown on hover): pin to top, connect on app start, auto-reconnect. Right-click a profile to hide it from the list; hidden profiles are restored from the tray menu (**Hidden profiles**).
 - Optional per-profile connect on app start: flagged profiles are dialed right after the app launches.
 - Optional per-profile auto-reconnect: if a connection drops, it is re-dialed up to 5 times, 5 seconds apart. A manual click or turning the option off cancels it.
-- Per-profile status (disconnected / connecting / connected / error), a live `hh:mm:ss` connection timer, and traffic for the current connection: bytes received / sent plus real-time speed.
+- Per-profile state shown by the colored dot (grey = disconnected, yellow = connecting, green = connected, red = error), a live `hh:mm:ss` connection timer and the current transfer speed; hover the speed line for total bytes received / sent.
 - One-click connect and disconnect; clicking a profile that is still connecting cancels the attempt.
 - Several VPNs can be dialed in parallel.
 - Connection errors are shown in the popup and cleared automatically after 30 seconds.
