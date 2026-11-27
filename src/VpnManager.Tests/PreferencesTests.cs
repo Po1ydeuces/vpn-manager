@@ -305,4 +305,26 @@ public class PreferencesTests {
 		Assert.True(last.Notify);
 		Assert.Equal(1, events.Count(e => e.Notify && e.Kind != ConnectionEventKind.Dropped));
 	}
+
+	[Fact]
+	public void Tooltip_ListsConnectedProfiles() {
+		var ras = new FakeRasService { Entries = { On("Work", TimeSpan.Zero), Off("Mid"), On("Home", TimeSpan.Zero) } };
+		var vm = Create(ras);
+
+		Assert.Equal("VPN Manager \u2014 Подключено: Home, Work", vm.TooltipText);
+
+		ras.Entries = new List<VpnEntry> { Off("Work"), Off("Mid"), Off("Home") };
+		vm.Refresh();
+		Assert.Equal("VPN Manager", vm.TooltipText);
+	}
+
+	[Fact]
+	public void Tooltip_IsTruncatedTo127Characters() {
+		var ras = new FakeRasService { Entries = { On(new string('A', 200), TimeSpan.Zero) } };
+
+		var text = Create(ras).TooltipText;
+
+		Assert.Equal(127, text.Length);
+		Assert.EndsWith("\u2026", text);
+	}
 }

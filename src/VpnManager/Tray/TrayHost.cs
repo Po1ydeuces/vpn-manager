@@ -198,6 +198,7 @@ public sealed class TrayHost : IDisposable {
 				_ = _vm.ConnectOnStartAsync(); // профили с флагом подключаются после первого опроса
 			}
 			_icon.Icon = _vm.AnyConnected ? _iconOn : _iconOff;
+			_icon.Text = _vm.TooltipText;
 		} catch (Exception) {
 			// следующий тик попробует снова
 		} finally {

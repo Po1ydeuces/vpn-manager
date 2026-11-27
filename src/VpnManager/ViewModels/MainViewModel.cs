@@ -37,6 +37,17 @@ public class MainViewModel : ViewModelBase {
 
 	public string EmptyText => Loc.T("NoVpn");
 
+	/// <summary>Подсказка иконки трея: активные VPN. Лимит NotifyIcon.Text — 127 символов.</summary>
+	public string TooltipText {
+		get {
+			var names = Items.Where(x => x.State == VpnState.Connected).Select(x => x.Name).ToList();
+			if (names.Count == 0) return "VPN Manager";
+
+			var text = $"VPN Manager — {Loc.T("Connected")}: {string.Join(", ", names)}";
+			return text.Length <= 127 ? text : text[..126] + "…";
+		}
+	}
+
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language => _settings.Language;
 
