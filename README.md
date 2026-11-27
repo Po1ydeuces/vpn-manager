@@ -9,16 +9,18 @@ A lightweight Windows tray utility for managing the built-in VPN connections. Cl
 - Row icons (shown on hover): pin to top, hide from the list, connect on app start, auto-reconnect. Hidden profiles are restored from the tray menu (**Hidden profiles**).
 - Optional per-profile connect on app start: flagged profiles are dialed right after the app launches.
 - Optional per-profile auto-reconnect: if a connection drops, it is re-dialed up to 5 times, 5 seconds apart. A manual click or turning the option off cancels it.
-- Per-profile status (disconnected / connecting / connected / error), a live `hh:mm:ss` connection timer and traffic counters (received / sent) for the current connection.
+- Per-profile status (disconnected / connecting / connected / error), a live `hh:mm:ss` connection timer, and traffic for the current connection: bytes received / sent plus real-time speed.
 - One-click connect and disconnect; clicking a profile that is still connecting cancels the attempt.
 - Several VPNs can be dialed in parallel.
 - Connection errors are shown in the popup and cleared automatically after 30 seconds.
-- Tray icon reflects whether any VPN is active.
-- Light and dark theme following the system setting.
+- Tray icon reflects whether any VPN is active; its tooltip lists the connected profiles.
+- Balloon notifications when a connection drops, fails, or auto-reconnect gives up (only while the popup is closed; can be turned off).
+- Light and dark theme: follows the system by default, or pick Light / Dark in the tray menu.
+- Connection log with connect, disconnect, drop (with session length) and failure entries; open it from the tray menu.
 - English and Russian UI. Follows the system language by default; can be switched from the tray menu.
 - Global `Ctrl+Alt+V` hotkey toggles the popup (can be turned off in the tray menu; it is skipped if another app already uses it).
-- Autostart toggle, language selection and **Exit** in the tray icon's context menu.
-- Pins, hidden profiles, per-profile options, hotkey and language are stored in `%LOCALAPPDATA%\VpnManager\settings.json`.
+- Tray icon's context menu: autostart with Windows, language, hotkey, hidden profiles, notifications, theme, connection log and **Exit**.
+- Pins, hidden profiles, per-profile options, hotkey, notifications, theme and language are stored in `%LOCALAPPDATA%\VpnManager\settings.json`. The connection log is `%LOCALAPPDATA%\VpnManager\connections.log` (trimmed to the last 2000 lines when it grows over 1 MB).
 - Single instance only.
 - Low footprint: no administrator rights needed, a few MB of memory when idle.
 - Unhandled errors are written to `%LOCALAPPDATA%\VpnManager\error.log` instead of closing the app.
@@ -67,7 +69,10 @@ The result is `publish/VpnManager.exe`.
 src/
 ├── VpnManager/          # WPF app (.NET 10)
 │   ├── Ras/             # P/Invoke wrappers for rasapi32.dll and RasService
-│   ├── Tray/            # NotifyIcon, popup positioning
+│   ├── Settings/        # JSON settings store
+│   ├── Logging/         # Connection log
+│   ├── Localization/    # EN/RU strings
+│   ├── Tray/            # NotifyIcon, popup positioning, global hotkey
 │   ├── Views/           # Popup window and list item
 │   └── ViewModels/      # Connection list, timers, commands
 ├── VpnManager.Tests/    # xUnit tests
