@@ -17,7 +17,7 @@ internal static class TestLanguage {
 
 public class PreferencesTests {
 	private static MainViewModel Create(FakeRasService ras, ISettingsStore? store = null) {
-		var vm = new MainViewModel(ras, store: store);
+		var vm = new MainViewModel(ras, store: store, reconnectDelay: TimeSpan.Zero);
 		vm.Refresh();
 		return vm;
 	}
@@ -51,11 +51,14 @@ public class PreferencesTests {
 		var first = Create(ras, store);
 		var b = first.Items[1];
 		b.IsPinned = true;
+		b.AutoReconnect = true;
 
 		var second = Create(ras, store);
 
 		Assert.Equal("B", second.Items[0].Name);
 		Assert.True(second.Items[0].IsPinned);
+		Assert.True(second.Items[0].AutoReconnect);
+		Assert.False(second.Items[1].AutoReconnect);
 	}
 
 	[Fact]
@@ -73,5 +76,77 @@ public class PreferencesTests {
 		} finally {
 			Loc.SetLanguage("ru");
 		}
+	}
+
+	[Fact]
+	public async Task AutoReconnect_ConnectionDropped_Redials() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var vm = Create(ras);
+		vm.Items[0].AutoReconnect = true;
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		await Task.Delay(50);
+
+		Assert.Equal(new[] { "A" }, ras.ConnectCalls);
+		Assert.Equal(VpnState.Connected, vm.Items[0].State);
+	}
+
+	[Fact]
+	public async Task AutoReconnect_Off_DoesNotRedial() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var vm = Create(ras);
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		await Task.Delay(50);
+
+		Assert.Empty(ras.ConnectCalls);
+	}
+
+	[Fact]
+	public async Task AutoReconnect_ManualDisconnect_DoesNotRedial() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var vm = Create(ras);
+		vm.Items[0].AutoReconnect = true;
+
+		await vm.Items[0].ToggleAsync();
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		await Task.Delay(50);
+
+		Assert.Empty(ras.ConnectCalls);
+	}
+
+	[Fact]
+	public async Task AutoReconnect_GivesUpAfterMaxAttempts() {
+		var ras = new FakeRasService {
+			Entries = { On("A", TimeSpan.Zero) },
+			ConnectBehavior = () => Task.FromResult(new RasResult(false, "boom", false))
+		};
+		var vm = Create(ras);
+		vm.Items[0].AutoReconnect = true;
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		await Task.Delay(100);
+
+		Assert.Equal(VpnItemViewModel.MaxReconnectAttempts, ras.ConnectCalls.Count);
+		Assert.Equal(VpnState.Error, vm.Items[0].State);
+	}
+
+	[Fact]
+	public async Task AutoReconnect_UserClickCancelsPendingRedial() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var vm = new MainViewModel(ras, reconnectDelay: TimeSpan.FromMilliseconds(200));
+		vm.Refresh();
+		vm.Items[0].AutoReconnect = true;
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		vm.Items[0].AutoReconnect = false; // пользователь выключил до истечения паузы
+		await Task.Delay(400);
+
+		Assert.Empty(ras.ConnectCalls);
 	}
 }

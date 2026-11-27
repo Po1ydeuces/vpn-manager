@@ -10,14 +10,17 @@ public class MainViewModel : ViewModelBase {
 	private readonly TimeProvider _time;
 	private readonly ISettingsStore _store;
 	private readonly AppSettings _settings;
+	private readonly TimeSpan? _reconnectDelay;
 	private bool _isEmpty = true;
 	private bool _anyConnected;
 
-	public MainViewModel(IRasService ras, TimeProvider? time = null, ISettingsStore? store = null) {
+	public MainViewModel(IRasService ras, TimeProvider? time = null, ISettingsStore? store = null,
+		TimeSpan? reconnectDelay = null) {
 		_ras = ras;
 		_time = time ?? TimeProvider.System;
 		_store = store ?? new MemorySettingsStore();
 		_settings = _store.Load();
+		_reconnectDelay = reconnectDelay;
 	}
 
 	public ObservableCollection<VpnItemViewModel> Items { get; } = new();
@@ -67,8 +70,9 @@ public class MainViewModel : ViewModelBase {
 		foreach (var entry in entries) {
 			var item = Items.FirstOrDefault(x => x.Name == entry.Name);
 			if (item == null) {
-				item = new VpnItemViewModel(entry.Name, _ras, _time) {
-					IsPinned = _settings.Pinned.Contains(entry.Name)
+				item = new VpnItemViewModel(entry.Name, _ras, _time, _reconnectDelay) {
+					IsPinned = _settings.Pinned.Contains(entry.Name),
+					AutoReconnect = _settings.AutoReconnect.Contains(entry.Name)
 				};
 				item.PreferencesChanged += OnPreferencesChanged;
 				Items.Add(item);
@@ -84,6 +88,7 @@ public class MainViewModel : ViewModelBase {
 
 	private void OnPreferencesChanged() {
 		_settings.Pinned = Items.Where(x => x.IsPinned).Select(x => x.Name).ToList();
+		_settings.AutoReconnect = Items.Where(x => x.AutoReconnect).Select(x => x.Name).ToList();
 		_store.Save(_settings);
 		Resort();
 	}

@@ -8,25 +8,36 @@ public class VpnItemViewModel : ViewModelBase {
 	private readonly IRasService _ras;
 	private int _pending; // локальные операции RAS в процессе (подключение, разрыв)
 	private CancellationTokenSource? _cts; // отмена текущей попытки подключения
+	private CancellationTokenSource? _reconnectCts; // отмена цикла автопереподключения
 
 	private VpnState _state;
 	private string? _durationText;
 	private string? _errorText;
 	private bool _isPinned;
+	private bool _autoReconnect;
 
 	/// <summary>Сколько ошибка остаётся видимой.</summary>
 	public static readonly TimeSpan ErrorLifetime = TimeSpan.FromSeconds(30);
 
+	/// <summary>Сколько раз пробуем переподключиться после обрыва.</summary>
+	public const int MaxReconnectAttempts = 5;
+
 	private readonly TimeProvider _time;
+	private readonly TimeSpan _reconnectDelay;
 	private DateTimeOffset _errorAt;
 
-	public VpnItemViewModel(string name, IRasService ras, TimeProvider? time = null) {
+	public VpnItemViewModel(string name, IRasService ras, TimeProvider? time = null, TimeSpan? reconnectDelay = null) {
 		Name = name;
 		_ras = ras;
 		_time = time ?? TimeProvider.System;
+		_reconnectDelay = reconnectDelay ?? TimeSpan.FromSeconds(5);
 		ToggleCommand = new RelayCommand(ToggleAsync);
 		TogglePinCommand = new RelayCommand(() => {
 			IsPinned = !IsPinned;
+			return Task.CompletedTask;
+		});
+		ToggleAutoReconnectCommand = new RelayCommand(() => {
+			AutoReconnect = !AutoReconnect;
 			return Task.CompletedTask;
 		});
 	}
@@ -34,8 +45,9 @@ public class VpnItemViewModel : ViewModelBase {
 	public string Name { get; }
 	public ICommand ToggleCommand { get; }
 	public ICommand TogglePinCommand { get; }
+	public ICommand ToggleAutoReconnectCommand { get; }
 
-	/// <summary>Пользователь изменил закрепление (нужно сохранить и пересортировать).</summary>
+	/// <summary>Пользователь изменил закрепление или автопереподключение (нужно сохранить и пересортировать).</summary>
 	public event Action? PreferencesChanged;
 
 	public bool IsPinned {
@@ -47,7 +59,18 @@ public class VpnItemViewModel : ViewModelBase {
 		}
 	}
 
+	public bool AutoReconnect {
+		get => _autoReconnect;
+		set {
+			if (!Set(ref _autoReconnect, value)) return;
+			if (!value) CancelReconnect();
+			Raise(nameof(AutoReconnectTip));
+			PreferencesChanged?.Invoke();
+		}
+	}
+
 	public string PinTip => Loc.T(IsPinned ? "Unpin" : "Pin");
+	public string AutoReconnectTip => Loc.T(AutoReconnect ? "AutoReconnectOn" : "AutoReconnectOff");
 
 	public VpnState State {
 		get => _state;
@@ -69,6 +92,7 @@ public class VpnItemViewModel : ViewModelBase {
 	public void RefreshStrings() {
 		Raise(nameof(StatusText));
 		Raise(nameof(PinTip));
+		Raise(nameof(AutoReconnectTip));
 	}
 
 	public string? DurationText {
@@ -99,6 +123,7 @@ public class VpnItemViewModel : ViewModelBase {
 				break;
 			default:
 				DurationText = null;
+				var dropped = State == VpnState.Connected;
 				if (State == VpnState.Error) {
 					// Ошибка видна ErrorLifetime после неудачи или до следующей попытки.
 					if (_time.GetUtcNow() - _errorAt < ErrorLifetime) return;
@@ -106,11 +131,48 @@ public class VpnItemViewModel : ViewModelBase {
 				}
 
 				State = VpnState.Disconnected;
+				// Соединение оборвалось само (наш разрыв ставит Disconnected до опроса).
+				if (dropped && AutoReconnect) StartReconnect();
 				break;
 		}
 	}
 
+	/// <summary>Щелчок пользователя: отменяет автопереподключение и переключает состояние.</summary>
 	public async Task ToggleAsync() {
+		CancelReconnect();
+		await ToggleCoreAsync();
+	}
+
+	private void CancelReconnect() {
+		var cts = _reconnectCts;
+		_reconnectCts = null;
+		cts?.Cancel();
+	}
+
+	private void StartReconnect() {
+		CancelReconnect();
+		var cts = new CancellationTokenSource();
+		_reconnectCts = cts;
+		_ = ReconnectAsync(cts);
+	}
+
+	private async Task ReconnectAsync(CancellationTokenSource cts) {
+		try {
+			for (var attempt = 0; attempt < MaxReconnectAttempts; attempt++) {
+				await Task.Delay(_reconnectDelay, _time, cts.Token);
+				if (!AutoReconnect || State is VpnState.Connected or VpnState.Connecting) return;
+				await ToggleCoreAsync();
+				if (State == VpnState.Connected) return;
+			}
+		} catch (OperationCanceledException) {
+			// пользователь вмешался или выключил автопереподключение
+		} finally {
+			if (ReferenceEquals(_reconnectCts, cts)) _reconnectCts = null;
+			cts.Dispose();
+		}
+	}
+
+	private async Task ToggleCoreAsync() {
 		if (State == VpnState.Connecting) {
 			// Повторный щелчок во время подключения = отмена попытки.
 			if (_cts != null) {

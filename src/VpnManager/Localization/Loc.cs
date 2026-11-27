@@ -17,7 +17,9 @@ public static class Loc {
 		["Language"] = ("Language", "Язык"),
 		["LanguageAuto"] = ("Auto", "Авто"),
 		["Pin"] = ("Pin to top", "Закрепить"),
-		["Unpin"] = ("Unpin", "Открепить")
+		["Unpin"] = ("Unpin", "Открепить"),
+		["AutoReconnectOn"] = ("Auto-reconnect: on", "Автопереподключение: вкл"),
+		["AutoReconnectOff"] = ("Auto-reconnect: off", "Автопереподключение: выкл")
 	};
 
 	private static bool _ru;
