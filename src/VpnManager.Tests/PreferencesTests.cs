@@ -211,4 +211,18 @@ public class PreferencesTests {
 		Assert.True(vm.IsEmpty);
 		Assert.True(vm.AnyConnected);
 	}
+
+	[Fact]
+	public void Traffic_ShownWhileConnected_ClearedAfterDisconnect() {
+		var ras = new FakeRasService {
+			Entries = { new VpnEntry("A", VpnState.Connected, TimeSpan.Zero, null, 2048, 5L * 1024 * 1024) }
+		};
+		var vm = Create(ras);
+		Assert.Equal("↓ 5 MB  ↑ 2 KB", vm.Items[0].TrafficText);
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+
+		Assert.Null(vm.Items[0].TrafficText);
+	}
 }

@@ -4,7 +4,7 @@
         xmlns:ras="clr-namespace:VpnManager.Ras"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
-        SizeToContent="Height" Width="324" ShowActivated="True"
+        SizeToContent="Height" Width="396" ShowActivated="True"
         KeyDown="Window_KeyDown" Deactivated="Window_Deactivated"
         IsVisibleChanged="Window_IsVisibleChanged" SizeChanged="Window_SizeChanged">
     <Window.Resources>
@@ -117,8 +117,23 @@
                                         <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
                                                    TextTrimming="CharacterEllipsis" FontSize="14"
                                                    Foreground="{DynamicResource TextMain}" />
-                                        <TextBlock Text="{Binding StatusText}" FontSize="12"
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StatusText}" FontSize="12"
                                                    Foreground="{DynamicResource TextMuted}" />
+                                            <TextBlock Text="{Binding TrafficText, StringFormat='  ·  {0}'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextMuted}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding TrafficText}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
                                         <TextBlock Text="{Binding ErrorText}" ToolTip="{Binding ErrorText}"
                                                    FontSize="12" TextWrapping="Wrap" MaxHeight="32"
                                                    TextTrimming="CharacterEllipsis"

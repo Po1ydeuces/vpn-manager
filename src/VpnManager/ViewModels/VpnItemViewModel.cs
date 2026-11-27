@@ -13,6 +13,7 @@ public class VpnItemViewModel : ViewModelBase {
 	private VpnState _state;
 	private string? _durationText;
 	private string? _errorText;
+	private string? _trafficText;
 	private bool _isPinned;
 	private bool _autoReconnect;
 	private bool _connectOnStart;
@@ -137,6 +138,12 @@ public class VpnItemViewModel : ViewModelBase {
 		private set => Set(ref _durationText, value);
 	}
 
+	/// <summary>«↓ принято ↑ отправлено» за текущее соединение; null, если не подключено.</summary>
+	public string? TrafficText {
+		get => _trafficText;
+		private set => Set(ref _trafficText, value);
+	}
+
 	public string? ErrorText {
 		get => _errorText;
 		private set => Set(ref _errorText, value);
@@ -153,13 +160,16 @@ public class VpnItemViewModel : ViewModelBase {
 				ErrorText = null;
 				State = VpnState.Connected;
 				DurationText = DurationFormatter.Format(entry.Duration ?? TimeSpan.Zero);
+				TrafficText = $"↓ {ByteFormatter.Format(entry.BytesReceived)}  ↑ {ByteFormatter.Format(entry.BytesSent)}";
 				break;
 			case VpnState.Connecting:
 				State = VpnState.Connecting;
 				DurationText = null;
+				TrafficText = null;
 				break;
 			default:
 				DurationText = null;
+				TrafficText = null;
 				var dropped = State == VpnState.Connected;
 				if (State == VpnState.Error) {
 					// Ошибка видна ErrorLifetime после неудачи или до следующей попытки.
@@ -230,6 +240,7 @@ public class VpnItemViewModel : ViewModelBase {
 			// _pending не даёт опросу вернуть «Подключено», пока разрыв не завершён.
 			_pending++;
 			DurationText = null;
+			TrafficText = null;
 			State = VpnState.Disconnected;
 			try {
 				await Task.Run(() => _ras.Disconnect(Name));

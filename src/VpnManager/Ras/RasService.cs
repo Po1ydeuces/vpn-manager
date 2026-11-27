@@ -52,7 +52,9 @@ public sealed class RasService : IRasService {
 			TimeSpan? duration = RasGetConnectionStatistics(hconn, ref stats) == 0
 				? TimeSpan.FromMilliseconds(stats.dwConnectDuration)
 				: null;
-			return new VpnEntry(name, VpnState.Connected, duration, null);
+			// Счётчики RAS 32-битные без знака: после 4 ГБ они переполняются и идут заново.
+			return new VpnEntry(name, VpnState.Connected, duration, null,
+				(uint)stats.dwBytesXmited, (uint)stats.dwBytesRcved);
 		}
 
 		if (status.rasconnstate == RASCS_Disconnected)
