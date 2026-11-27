@@ -15,6 +15,9 @@ public class AppSettings {
 	/// <summary>Всплывающие уведомления об обрыве и ошибках.</summary>
 	public bool NotificationsEnabled { get; set; } = true;
 
+	/// <summary>"light", "dark" или null (по системной).</summary>
+	public string? Theme { get; set; }
+
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language { get; set; }
 }

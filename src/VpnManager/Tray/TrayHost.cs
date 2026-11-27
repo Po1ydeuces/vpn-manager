@@ -25,10 +25,12 @@ public sealed class TrayHost : IDisposable {
 	private readonly Forms.ToolStripMenuItem _hotkeyItem;
 	private readonly Forms.ToolStripMenuItem _hiddenItem;
 	private readonly Forms.ToolStripMenuItem _notifyItem;
+	private readonly Forms.ToolStripMenuItem _themeItem;
 	private readonly GlobalHotkey _hotkey = new();
 
 	// null = язык системы; названия языков не переводятся
 	private static readonly (string? Code, string Name)[] Languages = { (null, ""), ("en", "English"), ("ru", "Русский") };
+	private static readonly (string? Code, string Key)[] Themes = { (null, "ThemeAuto"), ("light", "ThemeLight"), ("dark", "ThemeDark") };
 
 	private void UpdateMenuTexts() {
 		_autostartItem.Text = Loc.T("Autostart");
@@ -37,6 +39,12 @@ public sealed class TrayHost : IDisposable {
 		_hotkeyItem.Text = Loc.T("Hotkey");
 		_hiddenItem.Text = Loc.T("HiddenProfiles");
 		_notifyItem.Text = Loc.T("Notifications");
+		_themeItem.Text = Loc.T("Theme");
+		for (var i = 0; i < Themes.Length; i++) {
+			var item = (Forms.ToolStripMenuItem)_themeItem.DropDownItems[i];
+			item.Text = Loc.T(Themes[i].Key);
+			item.Checked = Themes[i].Code == _vm.Theme;
+		}
 		for (var i = 0; i < Languages.Length; i++) {
 			var item = (Forms.ToolStripMenuItem)_languageItem.DropDownItems[i];
 			item.Text = Languages[i].Code == null ? Loc.T("LanguageAuto") : Languages[i].Name;
@@ -69,6 +77,16 @@ public sealed class TrayHost : IDisposable {
 		_exitItem.Click += (_, _) => Application.Current.Shutdown();
 
 		_hiddenItem = new Forms.ToolStripMenuItem();
+		_themeItem = new Forms.ToolStripMenuItem();
+		foreach (var (themeCode, _) in Themes) {
+			var item = new Forms.ToolStripMenuItem();
+			item.Click += (_, _) => {
+				_vm.SetTheme(themeCode);
+				UpdateMenuTexts();
+			};
+			_themeItem.DropDownItems.Add(item);
+		}
+
 		_notifyItem = new Forms.ToolStripMenuItem { Checked = _vm.NotificationsEnabled };
 		_notifyItem.Click += (_, _) => {
 			_vm.SetNotificationsEnabled(!_vm.NotificationsEnabled);
@@ -105,6 +123,7 @@ public sealed class TrayHost : IDisposable {
 		menu.Items.Add(_languageItem);
 		menu.Items.Add(_hiddenItem);
 		menu.Items.Add(_notifyItem);
+		menu.Items.Add(_themeItem);
 		menu.Items.Add(_hotkeyItem);
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();

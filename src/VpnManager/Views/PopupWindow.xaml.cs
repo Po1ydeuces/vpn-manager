@@ -57,9 +57,14 @@ public partial class PopupWindow : Window {
 	}
 
 	private void ApplyTheme() {
-		var light = Registry.GetValue(
+		var systemLight = Registry.GetValue(
 			@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
 			"AppsUseLightTheme", 1) is not int v || v != 0;
+		var light = (DataContext as MainViewModel)?.Theme switch {
+			"light" => true,
+			"dark" => false,
+			_ => systemLight
+		};
 
 		if (_theme != null) Resources.MergedDictionaries.Remove(_theme);
 		_theme = new ResourceDictionary {

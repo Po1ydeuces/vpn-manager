@@ -25,6 +25,10 @@ public static class Loc {
 		["Hotkey"] = ("Global hotkey (Ctrl+Alt+V)", "Глобальная горячая клавиша (Ctrl+Alt+V)"),
 		["Hide"] = ("Hide from list", "Скрыть из списка"),
 		["HiddenProfiles"] = ("Hidden profiles", "Скрытые профили"),
+		["Theme"] = ("Theme", "Тема"),
+		["ThemeAuto"] = ("Auto", "Авто"),
+		["ThemeLight"] = ("Light", "Светлая"),
+		["ThemeDark"] = ("Dark", "Тёмная"),
 		["Notifications"] = ("Notifications", "Уведомления"),
 		["NotifyDropped"] = ("Connection lost", "Соединение потеряно"),
 		["NotifyGaveUp"] = ("Auto-reconnect gave up", "Автопереподключение не удалось")

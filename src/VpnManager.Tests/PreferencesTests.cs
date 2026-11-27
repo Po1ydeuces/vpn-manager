@@ -327,4 +327,15 @@ public class PreferencesTests {
 		Assert.Equal(127, text.Length);
 		Assert.EndsWith("\u2026", text);
 	}
+
+	[Fact]
+	public void Theme_DefaultsToSystem_AndPersists() {
+		var store = new MemorySettingsStore();
+		var vm = Create(new FakeRasService(), store);
+		Assert.Null(vm.Theme);
+
+		vm.SetTheme("dark");
+
+		Assert.Equal("dark", Create(new FakeRasService(), store).Theme);
+	}
 }

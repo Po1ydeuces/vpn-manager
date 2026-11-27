@@ -53,6 +53,14 @@ public class MainViewModel : ViewModelBase {
 
 	public bool HotkeyEnabled => _settings.HotkeyEnabled;
 
+	/// <summary>"light", "dark" или null (по системной).</summary>
+	public string? Theme => _settings.Theme;
+
+	public void SetTheme(string? theme) {
+		_settings.Theme = theme;
+		_store.Save(_settings);
+	}
+
 	public bool NotificationsEnabled => _settings.NotificationsEnabled;
 
 	public void SetNotificationsEnabled(bool enabled) {
