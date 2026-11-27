@@ -4,7 +4,7 @@
         xmlns:ras="clr-namespace:VpnManager.Ras"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
-        SizeToContent="Height" Width="396" ShowActivated="True"
+        SizeToContent="Height" Width="360" ShowActivated="True"
         KeyDown="Window_KeyDown" Deactivated="Window_Deactivated"
         IsVisibleChanged="Window_IsVisibleChanged" SizeChanged="Window_SizeChanged">
     <Window.Resources>
@@ -29,8 +29,8 @@
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Opacity" Value="0" />
-            <Setter Property="Width" Value="26" />
-            <Setter Property="Height" Value="26" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
             <Setter Property="Margin" Value="0,0,2,0" />
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="13" />
@@ -55,6 +55,37 @@
                     <Setter Property="Foreground" Value="{DynamicResource DotOn}" />
                 </DataTrigger>
             </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PopupMenu" TargetType="ContextMenu">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource PanelBorder}"
+                                BorderThickness="1" CornerRadius="6" Padding="3">
+                            <ItemsPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PopupMenuItem" TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,6">
+                            <ContentPresenter ContentSource="Header" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource RowHover}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="Dot" TargetType="Ellipse">
@@ -105,6 +136,12 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+                            <Grid.ContextMenu>
+                                <ContextMenu Style="{StaticResource PopupMenu}">
+                                    <MenuItem Style="{StaticResource PopupMenuItem}" Header="{Binding HideTip}"
+                                              Command="{Binding HideCommand}" />
+                                </ContextMenu>
+                            </Grid.ContextMenu>
                             <Button Style="{StaticResource RowButton}" Command="{Binding ToggleCommand}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -112,26 +149,25 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Ellipse Style="{StaticResource Dot}" Margin="0,0,10,0" />
+                                    <Ellipse Style="{StaticResource Dot}" Margin="0,0,10,0" ToolTip="{Binding StatusText}" />
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
                                                    TextTrimming="CharacterEllipsis" FontSize="14"
                                                    Foreground="{DynamicResource TextMain}" />
-                                            <TextBlock Text="{Binding StatusText}" FontSize="12"
-                                                   Foreground="{DynamicResource TextMuted}" />
-                                            <TextBlock Text="{Binding TrafficText}" ToolTip="{Binding TrafficText}" TextTrimming="CharacterEllipsis" FontSize="12"
-                                                       Foreground="{DynamicResource TextMuted}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding TrafficText}" Value="{x:Null}">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
+                                        <TextBlock Text="{Binding SpeedText}" ToolTip="{Binding TrafficText}"
+                                                   TextTrimming="CharacterEllipsis" FontSize="12"
+                                                   Foreground="{DynamicResource TextMuted}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SpeedText}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <TextBlock Text="{Binding ErrorText}" ToolTip="{Binding ErrorText}"
                                                    FontSize="12" TextWrapping="Wrap" MaxHeight="32"
                                                    TextTrimming="CharacterEllipsis"
@@ -154,8 +190,6 @@
                                 </Grid>
                             </Button>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button x:Name="HideBtn" Style="{StaticResource IconButton}" Content="&#xE711;"
-                                        Command="{Binding HideCommand}" ToolTip="{Binding HideTip}" />
                                 <Button x:Name="StartBtn" Style="{StaticResource IconButton}" Content="&#xE7E8;"
                                         Command="{Binding ToggleConnectOnStartCommand}"
                                         ToolTip="{Binding ConnectOnStartTip}" Tag="{Binding ConnectOnStart}" />
@@ -170,7 +204,6 @@
                             <DataTemplate.Triggers>
                                 <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
                                     <Setter TargetName="ReconnectBtn" Property="Opacity" Value="1" />
-                                    <Setter TargetName="HideBtn" Property="Opacity" Value="1" />
                                     <Setter TargetName="StartBtn" Property="Opacity" Value="1" />
                                     <Setter TargetName="PinBtn" Property="Opacity" Value="1" />
                                 </Trigger>

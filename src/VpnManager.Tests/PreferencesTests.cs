@@ -481,4 +481,24 @@ public class PreferencesTests {
 			File.Delete(path);
 		}
 	}
+
+	[Fact]
+	public void SpeedText_ShowsZeroOnFirstPoll_AndClearsWhenDisconnected() {
+		var clock = new FakeClock();
+		var ras = new FakeRasService {
+			Entries = { new VpnEntry("A", VpnState.Connected, TimeSpan.Zero, null, 10, 10) }
+		};
+		var vm = new MainViewModel(ras, clock);
+		vm.Refresh();
+		Assert.Equal("↓ 0 B/s  ↑ 0 B/s", vm.Items[0].SpeedText);
+
+		clock.Now += TimeSpan.FromSeconds(1);
+		ras.Entries = new List<VpnEntry> { new("A", VpnState.Connected, TimeSpan.Zero, null, 2058, 3 * 1024 * 1024 + 10) };
+		vm.Refresh();
+		Assert.Equal("↓ 3 MB/s  ↑ 2 KB/s", vm.Items[0].SpeedText);
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		Assert.Null(vm.Items[0].SpeedText);
+	}
 }

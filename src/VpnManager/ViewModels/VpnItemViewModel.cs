@@ -14,6 +14,7 @@ public class VpnItemViewModel : ViewModelBase {
 	private string? _durationText;
 	private string? _errorText;
 	private string? _trafficText;
+	private string? _speedText;
 	private bool _isPinned;
 	private bool _autoReconnect;
 	private bool _connectOnStart;
@@ -139,6 +140,12 @@ public class VpnItemViewModel : ViewModelBase {
 	}
 
 	/// <summary>«↓ принято ↑ отправлено» за текущее соединение; null, если не подключено.</summary>
+	/// <summary>Скорость «↓ x/s  ↑ y/s» для строки под именем; null, если не подключено.</summary>
+	public string? SpeedText {
+		get => _speedText;
+		private set => Set(ref _speedText, value);
+	}
+
 	public string? TrafficText {
 		get => _trafficText;
 		private set => Set(ref _trafficText, value);
@@ -159,6 +166,7 @@ public class VpnItemViewModel : ViewModelBase {
 		_sample = null;
 		_hasRate = false;
 		TrafficText = null;
+		SpeedText = null;
 	}
 
 	// Скорость = прирост счётчиков RAS между двумя опросами. Счётчики 32-битные: переполнение учитываем.
@@ -176,6 +184,7 @@ public class VpnItemViewModel : ViewModelBase {
 			_sample = (now, entry.BytesReceived, entry.BytesSent);
 		}
 
+		SpeedText = $"↓ {ByteFormatter.FormatRate(_downRate)}  ↑ {ByteFormatter.FormatRate(_upRate)}";
 		var down = ByteFormatter.Format(entry.BytesReceived);
 		var up = ByteFormatter.Format(entry.BytesSent);
 		TrafficText = _hasRate
