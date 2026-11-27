@@ -1,0 +1,113 @@
+<Window x:Class="VpnManager.Views.PopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ras="clr-namespace:VpnManager.Ras"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
+        SizeToContent="Height" Width="324" ShowActivated="True"
+        KeyDown="Window_KeyDown" Deactivated="Window_Deactivated"
+        IsVisibleChanged="Window_IsVisibleChanged" SizeChanged="Window_SizeChanged">
+    <Window.Resources>
+        <Style x:Key="RowButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="10,8">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource RowHover}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Dot" TargetType="Ellipse">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Fill" Value="{DynamicResource DotOff}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static ras:VpnState.Connected}">
+                    <Setter Property="Fill" Value="{DynamicResource DotOn}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static ras:VpnState.Connecting}">
+                    <Setter Property="Fill" Value="{DynamicResource DotBusy}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static ras:VpnState.Error}">
+                    <Setter Property="Fill" Value="{DynamicResource DotError}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Border Margin="12" Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource PanelBorder}"
+            BorderThickness="1" CornerRadius="10" Padding="6">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.35" />
+        </Border.Effect>
+        <Grid>
+            <TextBlock Text="Нет VPN-подключений" Foreground="{DynamicResource TextMuted}"
+                       HorizontalAlignment="Center" Margin="0,16">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource RowButton}" Command="{Binding ToggleCommand}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Style="{StaticResource Dot}" Margin="0,0,10,0" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
+                                                   TextTrimming="CharacterEllipsis" FontSize="14"
+                                                   Foreground="{DynamicResource TextMain}" />
+                                        <TextBlock Text="{Binding StatusText}" FontSize="12"
+                                                   Foreground="{DynamicResource TextMuted}" />
+                                        <TextBlock Text="{Binding ErrorText}" ToolTip="{Binding ErrorText}"
+                                                   FontSize="12" TextWrapping="Wrap" MaxHeight="32"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource DotError}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ErrorText}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontFamily="Consolas"
+                                               FontSize="13" VerticalAlignment="Center" Margin="10,0,0,0"
+                                               Foreground="{DynamicResource TextMuted}" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</Window>
