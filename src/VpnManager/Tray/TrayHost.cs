@@ -22,6 +22,8 @@ public sealed class TrayHost : IDisposable {
 	private readonly Forms.ToolStripMenuItem _autostartItem;
 	private readonly Forms.ToolStripMenuItem _exitItem;
 	private readonly Forms.ToolStripMenuItem _languageItem;
+	private readonly Forms.ToolStripMenuItem _hotkeyItem;
+	private readonly GlobalHotkey _hotkey = new();
 
 	// null = язык системы; названия языков не переводятся
 	private static readonly (string? Code, string Name)[] Languages = { (null, ""), ("en", "English"), ("ru", "Русский") };
@@ -30,6 +32,7 @@ public sealed class TrayHost : IDisposable {
 		_autostartItem.Text = Loc.T("Autostart");
 		_exitItem.Text = Loc.T("Exit");
 		_languageItem.Text = Loc.T("Language");
+		_hotkeyItem.Text = Loc.T("Hotkey");
 		for (var i = 0; i < Languages.Length; i++) {
 			var item = (Forms.ToolStripMenuItem)_languageItem.DropDownItems[i];
 			item.Text = Languages[i].Code == null ? Loc.T("LanguageAuto") : Languages[i].Name;
@@ -49,6 +52,17 @@ public sealed class TrayHost : IDisposable {
 		_exitItem = new Forms.ToolStripMenuItem();
 		_exitItem.Click += (_, _) => Application.Current.Shutdown();
 
+		_hotkeyItem = new Forms.ToolStripMenuItem();
+		_hotkeyItem.Click += (_, _) => {
+			if (_hotkey.IsRegistered) _hotkey.Unregister();
+			else _hotkey.Register();
+			_vm.SetHotkeyEnabled(_hotkey.IsRegistered);
+			_hotkeyItem.Checked = _hotkey.IsRegistered;
+		};
+		_hotkey.Pressed += OnHotkey;
+		if (_vm.HotkeyEnabled) _hotkey.Register();
+		_hotkeyItem.Checked = _hotkey.IsRegistered;
+
 		_languageItem = new Forms.ToolStripMenuItem();
 		foreach (var (code, _) in Languages) {
 			var item = new Forms.ToolStripMenuItem { Tag = code };
@@ -63,6 +77,7 @@ public sealed class TrayHost : IDisposable {
 		menu.Opening += (_, _) => _autostartItem.Checked = Autostart.IsEnabled();
 		menu.Items.Add(_autostartItem);
 		menu.Items.Add(_languageItem);
+		menu.Items.Add(_hotkeyItem);
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();
 
@@ -114,6 +129,18 @@ public sealed class TrayHost : IDisposable {
 		_popup.ShowAt(Forms.Cursor.Position);
 	}
 
+	// С клавиатуры иконка не под рукой: popup открывается у правого нижнего угла основного экрана, где обычно трей.
+	private void OnHotkey() {
+		if (_popup.IsVisible) {
+			_popup.Hide();
+			return;
+		}
+
+		var wa = Forms.Screen.PrimaryScreen!.WorkingArea;
+		Tick();
+		_popup.ShowAt(new System.Drawing.Point(wa.Right, wa.Bottom));
+	}
+
 	private bool _startupDone;
 	private bool _refreshing;
 
@@ -136,6 +163,7 @@ public sealed class TrayHost : IDisposable {
 
 	public void Dispose() {
 		_timer.Stop();
+		_hotkey.Dispose();
 		_trimTimer.Stop();
 		_icon.Visible = false;
 		_icon.Dispose();

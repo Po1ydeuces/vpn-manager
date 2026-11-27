@@ -40,6 +40,13 @@ public class MainViewModel : ViewModelBase {
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language => _settings.Language;
 
+	public bool HotkeyEnabled => _settings.HotkeyEnabled;
+
+	public void SetHotkeyEnabled(bool enabled) {
+		_settings.HotkeyEnabled = enabled;
+		_store.Save(_settings);
+	}
+
 	public void SetLanguage(string? language) {
 		_settings.Language = language;
 		_store.Save(_settings);

@@ -173,4 +173,15 @@ public class PreferencesTests {
 		Assert.False(second.Items[0].ConnectOnStart);
 		Assert.True(second.Items[1].ConnectOnStart);
 	}
+
+	[Fact]
+	public void Hotkey_EnabledByDefault_AndPersisted() {
+		var store = new MemorySettingsStore();
+		var vm = Create(new FakeRasService(), store);
+		Assert.True(vm.HotkeyEnabled);
+
+		vm.SetHotkeyEnabled(false);
+
+		Assert.False(Create(new FakeRasService(), store).HotkeyEnabled);
+	}
 }
