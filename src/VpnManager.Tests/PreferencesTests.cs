@@ -225,4 +225,84 @@ public class PreferencesTests {
 
 		Assert.Null(vm.Items[0].TrafficText);
 	}
+
+	private static (MainViewModel vm, List<ConnectionEvent> events) WithEvents(FakeRasService ras) {
+		var vm = Create(ras);
+		var events = new List<ConnectionEvent>();
+		vm.Happened += events.Add;
+		return (vm, events);
+	}
+
+	[Fact]
+	public void Notifications_EnabledByDefault_AndPersisted() {
+		var store = new MemorySettingsStore();
+		var vm = Create(new FakeRasService(), store);
+		Assert.True(vm.NotificationsEnabled);
+
+		vm.SetNotificationsEnabled(false);
+
+		Assert.False(Create(new FakeRasService(), store).NotificationsEnabled);
+	}
+
+	[Fact]
+	public void Event_DroppedConnection_IsReported() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var (vm, events) = WithEvents(ras);
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+
+		var e = Assert.Single(events);
+		Assert.Equal(ConnectionEventKind.Dropped, e.Kind);
+		Assert.Equal("A", e.Name);
+	}
+
+	[Fact]
+	public async Task Event_ManualDisconnect_IsNotReportedAsDrop() {
+		var ras = new FakeRasService { Entries = { On("A", TimeSpan.Zero) } };
+		var (vm, events) = WithEvents(ras);
+
+		await vm.Items[0].ToggleAsync();
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+
+		Assert.Empty(events);
+	}
+
+	[Fact]
+	public async Task Event_ConnectFailure_IsReportedWithDetail() {
+		var ras = new FakeRasService {
+			Entries = { Off("A") },
+			ConnectBehavior = () => Task.FromResult(new RasResult(false, "boom", false))
+		};
+		var (vm, events) = WithEvents(ras);
+
+		await vm.Items[0].ToggleAsync();
+
+		var e = Assert.Single(events);
+		Assert.Equal(ConnectionEventKind.Failed, e.Kind);
+		Assert.Equal("boom", e.Detail);
+		Assert.True(e.Notify);
+	}
+
+	[Fact]
+	public async Task Event_ReconnectFailures_AreQuietUntilGaveUp() {
+		var ras = new FakeRasService {
+			Entries = { On("A", TimeSpan.Zero) },
+			ConnectBehavior = () => Task.FromResult(new RasResult(false, "boom", false))
+		};
+		var (vm, events) = WithEvents(ras);
+		vm.Items[0].AutoReconnect = true;
+
+		ras.Entries = new List<VpnEntry> { Off("A") };
+		vm.Refresh();
+		await Task.Delay(100);
+
+		Assert.Equal(ConnectionEventKind.Dropped, events[0].Kind);
+		Assert.All(events.Where(e => e.Kind == ConnectionEventKind.Failed), e => Assert.False(e.Notify));
+		var last = events[^1];
+		Assert.Equal(ConnectionEventKind.GaveUp, last.Kind);
+		Assert.True(last.Notify);
+		Assert.Equal(1, events.Count(e => e.Notify && e.Kind != ConnectionEventKind.Dropped));
+	}
 }

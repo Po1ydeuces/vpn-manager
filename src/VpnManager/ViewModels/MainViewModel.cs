@@ -42,6 +42,16 @@ public class MainViewModel : ViewModelBase {
 
 	public bool HotkeyEnabled => _settings.HotkeyEnabled;
 
+	public bool NotificationsEnabled => _settings.NotificationsEnabled;
+
+	public void SetNotificationsEnabled(bool enabled) {
+		_settings.NotificationsEnabled = enabled;
+		_store.Save(_settings);
+	}
+
+	/// <summary>События соединений всех профилей (обрыв, ошибка) для уведомлений.</summary>
+	public event Action<ConnectionEvent>? Happened;
+
 	public void SetHotkeyEnabled(bool enabled) {
 		_settings.HotkeyEnabled = enabled;
 		_store.Save(_settings);
@@ -84,6 +94,7 @@ public class MainViewModel : ViewModelBase {
 					IsHidden = _settings.Hidden.Contains(entry.Name)
 				};
 				item.PreferencesChanged += OnPreferencesChanged;
+				item.Happened += e => Happened?.Invoke(e);
 				Items.Add(item);
 			}
 

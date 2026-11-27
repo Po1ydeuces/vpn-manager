@@ -151,6 +151,15 @@ public class VpnItemViewModel : ViewModelBase {
 
 	public bool IsBusy => State == VpnState.Connecting;
 
+	/// <summary>Событие жизненного цикла соединения (обрыв, ошибка): для уведомлений.</summary>
+	public event Action<ConnectionEvent>? Happened;
+
+	private bool _reconnecting; // идёт цикл автопереподключения: промежуточные ошибки тихие
+
+	private void Emit(ConnectionEventKind kind, string? detail = null, TimeSpan? duration = null, bool notify = true) {
+		Happened?.Invoke(new ConnectionEvent(_time.GetUtcNow(), Name, kind, duration, detail, notify));
+	}
+
 	/// <summary>Применить состояние из RAS (вызывается при опросе).</summary>
 	public void Apply(VpnEntry entry) {
 		if (_pending > 0) return; // локальное состояние главнее данных опроса
@@ -179,7 +188,11 @@ public class VpnItemViewModel : ViewModelBase {
 
 				State = VpnState.Disconnected;
 				// Соединение оборвалось само (наш разрыв ставит Disconnected до опроса).
-				if (dropped && AutoReconnect) StartReconnect();
+				if (dropped) {
+					Emit(ConnectionEventKind.Dropped);
+					if (AutoReconnect) StartReconnect();
+				}
+
 				break;
 		}
 	}
@@ -204,6 +217,7 @@ public class VpnItemViewModel : ViewModelBase {
 	}
 
 	private async Task ReconnectAsync(CancellationTokenSource cts) {
+		_reconnecting = true;
 		try {
 			for (var attempt = 0; attempt < MaxReconnectAttempts; attempt++) {
 				await Task.Delay(_reconnectDelay, _time, cts.Token);
@@ -211,9 +225,14 @@ public class VpnItemViewModel : ViewModelBase {
 				await ToggleCoreAsync();
 				if (State == VpnState.Connected) return;
 			}
+
+			_reconnecting = false;
+			cts.Token.ThrowIfCancellationRequested(); // отмена пользователем на последней попытке — не «сдались»
+			Emit(ConnectionEventKind.GaveUp, ErrorText);
 		} catch (OperationCanceledException) {
 			// пользователь вмешался или выключил автопереподключение
 		} finally {
+			_reconnecting = false;
 			if (ReferenceEquals(_reconnectCts, cts)) _reconnectCts = null;
 			cts.Dispose();
 		}
@@ -281,6 +300,7 @@ public class VpnItemViewModel : ViewModelBase {
 					: result.ErrorText ?? Loc.T("ConnectFailed");
 				_errorAt = _time.GetUtcNow();
 				State = VpnState.Error;
+				Emit(ConnectionEventKind.Failed, ErrorText, notify: !_reconnecting);
 			}
 		} finally {
 			cts.Dispose();

@@ -12,6 +12,9 @@ public class AppSettings {
 	/// <summary>Ctrl+Alt+V открывает popup.</summary>
 	public bool HotkeyEnabled { get; set; } = true;
 
+	/// <summary>Всплывающие уведомления об обрыве и ошибках.</summary>
+	public bool NotificationsEnabled { get; set; } = true;
+
 	/// <summary>"en", "ru" или null (по системному).</summary>
 	public string? Language { get; set; }
 }

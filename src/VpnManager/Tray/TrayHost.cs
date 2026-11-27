@@ -24,6 +24,7 @@ public sealed class TrayHost : IDisposable {
 	private readonly Forms.ToolStripMenuItem _languageItem;
 	private readonly Forms.ToolStripMenuItem _hotkeyItem;
 	private readonly Forms.ToolStripMenuItem _hiddenItem;
+	private readonly Forms.ToolStripMenuItem _notifyItem;
 	private readonly GlobalHotkey _hotkey = new();
 
 	// null = язык системы; названия языков не переводятся
@@ -35,6 +36,7 @@ public sealed class TrayHost : IDisposable {
 		_languageItem.Text = Loc.T("Language");
 		_hotkeyItem.Text = Loc.T("Hotkey");
 		_hiddenItem.Text = Loc.T("HiddenProfiles");
+		_notifyItem.Text = Loc.T("Notifications");
 		for (var i = 0; i < Languages.Length; i++) {
 			var item = (Forms.ToolStripMenuItem)_languageItem.DropDownItems[i];
 			item.Text = Languages[i].Code == null ? Loc.T("LanguageAuto") : Languages[i].Name;
@@ -67,6 +69,12 @@ public sealed class TrayHost : IDisposable {
 		_exitItem.Click += (_, _) => Application.Current.Shutdown();
 
 		_hiddenItem = new Forms.ToolStripMenuItem();
+		_notifyItem = new Forms.ToolStripMenuItem { Checked = _vm.NotificationsEnabled };
+		_notifyItem.Click += (_, _) => {
+			_vm.SetNotificationsEnabled(!_vm.NotificationsEnabled);
+			_notifyItem.Checked = _vm.NotificationsEnabled;
+		};
+		_vm.Happened += OnHappened;
 		_hotkeyItem = new Forms.ToolStripMenuItem();
 		_hotkeyItem.Click += (_, _) => {
 			if (_hotkey.IsRegistered) _hotkey.Unregister();
@@ -96,6 +104,7 @@ public sealed class TrayHost : IDisposable {
 		menu.Items.Add(_autostartItem);
 		menu.Items.Add(_languageItem);
 		menu.Items.Add(_hiddenItem);
+		menu.Items.Add(_notifyItem);
 		menu.Items.Add(_hotkeyItem);
 		menu.Items.Add(_exitItem);
 		UpdateMenuTexts();
@@ -158,6 +167,22 @@ public sealed class TrayHost : IDisposable {
 		var wa = Forms.Screen.PrimaryScreen!.WorkingArea;
 		Tick();
 		_popup.ShowAt(new System.Drawing.Point(wa.Right, wa.Bottom));
+	}
+
+	// Уведомление только когда popup закрыт: иначе ошибка и так видна в списке.
+	private void OnHappened(ConnectionEvent e) {
+		if (!e.Notify || !_vm.NotificationsEnabled || _popup.IsVisible) return;
+
+		var title = e.Kind switch {
+			ConnectionEventKind.Dropped => Loc.T("NotifyDropped"),
+			ConnectionEventKind.GaveUp => Loc.T("NotifyGaveUp"),
+			ConnectionEventKind.Failed => Loc.T("ConnectFailed"),
+			_ => null
+		};
+		if (title == null) return;
+
+		var text = string.IsNullOrEmpty(e.Detail) ? e.Name : e.Name + Environment.NewLine + e.Detail;
+		_icon.ShowBalloonTip(5000, title, text, Forms.ToolTipIcon.Warning);
 	}
 
 	private bool _startupDone;

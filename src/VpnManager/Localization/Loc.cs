@@ -24,7 +24,10 @@ public static class Loc {
 		["ConnectOnStartOff"] = ("Connect on app start: off", "Подключать при запуске: выкл"),
 		["Hotkey"] = ("Global hotkey (Ctrl+Alt+V)", "Глобальная горячая клавиша (Ctrl+Alt+V)"),
 		["Hide"] = ("Hide from list", "Скрыть из списка"),
-		["HiddenProfiles"] = ("Hidden profiles", "Скрытые профили")
+		["HiddenProfiles"] = ("Hidden profiles", "Скрытые профили"),
+		["Notifications"] = ("Notifications", "Уведомления"),
+		["NotifyDropped"] = ("Connection lost", "Соединение потеряно"),
+		["NotifyGaveUp"] = ("Auto-reconnect gave up", "Автопереподключение не удалось")
 	};
 
 	private static bool _ru;
